@@ -10,6 +10,9 @@ avo = 6.023e23
 R = k*avo / 1000.
 T = 310.0
 
+# THIS IS PROBLEM SPECIFIC AND SHOULD BE MOVED EVENTUALLY
+residues = {0: "asp156", 1: "asp157", 2: "lys305"}
+
 def _links(x):
     """Helper function to link states with one another."""
     return [(x[i],x[i+1]) for i,_ in enumerate(x[:-1])]
