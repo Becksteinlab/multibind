@@ -18,15 +18,45 @@ def _links(x):
     return [(x[i],x[i+1]) for i,_ in enumerate(x[:-1])]
 
 def binding_energy(DG, Na, c0=1):
+    """Calculate the binding free energy while considering the
+    contributions due to the sodium concentration.
+
+    Parameters
+    ----------
+    DG : floating point value collected from MD simulations.
+
+    Na : Sodium concentration 
+
+    Returns
+    -------
+    DG : floating point value of the free energy with added
+    contributions from sodium concentration.
+    """
     return np.float128(DG - (R*T) * np.log(Na/c0))
 
 def protonation_energy(pka, pH):
+    """Calculate the free energy of protonation while considering the
+    pH of the system.
+
+    Parameters
+    ----------
+    pka : floating point pka value for a residue
+    
+    pH : pH of the system.
+
+    Returns
+    -------
+    DG : floating point free energy of protonation
+    """
     return np.float128((R*T) * np.log(10)*(pH-pka))
 
 def deprotonation_energy(pka, pH):
+    """Negative of protonation energy."""
     return  -protonation_energy(pka, pH)
 
 def get_path_energy(cycle, s1, s2):
+    """Determine which path through the thermodynamic cycle that
+    minimized the error propagated."""
     edge_energies = nx.get_edge_attributes(cycle, 'energy')
     edge_var = nx.get_edge_attributes(cycle, 'weight')
     path = nx.dijkstra_path(cycle, s1, s2)
@@ -144,7 +174,22 @@ def make_graph(pkas, binding, conformation="IF", pH=7, c_na=1.0,
     return G, states
 
 def calculate(pkas, binding, conformation="IF", pH=7, c_na=1.0, residues=residues):
+    """Use all available data to construct a thermodynamic model of
+    the system. 
+    
 
+    Parameters
+    ----------
+    pkas : Pandas dataframe of pKa values
+
+    binding : Pandas dataframe of binding free energies for the
+    different protonation states
+
+    Returns
+    -------
+    energy_matrix : energy "matrix" G[i, j] as a DataFrame
+    cycle : NetworkX graph containing all of the system information
+    """
     cycle, states = make_graph(pkas, binding, conformation=conformation,
                               pH=pH, c_na=c_na, residues=residues)
     matrix_results = energy_matrix(cycle)
