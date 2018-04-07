@@ -2,11 +2,6 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
-k = 1.38064852e-23
-avo = 6.023e23
-R = k*avo / 1000.
-T = 310.0
-
 class Multibind(object):
 
     def __init__(self, states_filename=None, graph_filename=None):
