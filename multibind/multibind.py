@@ -130,7 +130,31 @@ class Multibind(object):
         self.MLE_res = root(grad_log_likelihood, initial_guess, jac=jacobian)
         self.g_mle = self.MLE_res.x - self.MLE_res.x[0]
         return self.MLE_res
+
+    def effective_energy_difference(self, macrostate_class, state1, state2):
+        """Calculate the effective binding energy between two states.
         
+        Parameters
+        ==========
+        macrostate_class : name of macrostate class (i.e. number of protons)
+        state1 : first, 'starting' state
+        state2 : second, 'destination' state
+
+        Returns
+        =======
+        float : binding free energy in kT
+        """
+
+        macrostate_class = str(macrostate_class)
+        
+        microstates_1_indices = self.states[self.states[macrostate_class] == state1].index
+        microstates_2_indices = self.states[self.states[macrostate_class] == state2].index
+
+        energies_1 = np.array([self.g_mle[i] for i in microstates_1_indices])
+        energies_2 = np.array([self.g_mle[i] for i in microstates_2_indices])
+
+        return np.log(np.sum(np.exp(-energies_1))/np.sum(np.exp(-energies_2)))
+    
     def _parse(self, filename, comment=None):
         """Helper function to quickly parse CSV into a DataFrame"""
         try:
