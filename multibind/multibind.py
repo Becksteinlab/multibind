@@ -114,7 +114,7 @@ class Multibind(object):
                         state1, state2, value, variance, ligand, standard_state = self.graph.iloc[k]
                         i = self.states[self.states.name == state1].index[0]
                         j = self.states[self.states.name == state2].index[0]
-                        kdelta_factor = kd(n,j)*kd(m,j) - kd(n,j)*kd(m,i) - kd(n,i)*kd(m,j) + kd(n,i)*kd(m,i)
+                        kdelta_factor = kd(n,j)*kd(m,i) - kd(n,j)*kd(m,j) - kd(n,i)*kd(m,i) + kd(n,i)*kd(m,j)
                         J[n,m] += 1/variance * kdelta_factor
             return J
         
