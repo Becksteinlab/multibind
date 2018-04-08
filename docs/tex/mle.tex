@@ -54,11 +54,11 @@ function the jacobian, whose elements are:
   J_{nm} = \frac{\partial}{\partial g_n} \left( \boldsymbol \nabla _{g}
   \ln L \right)_m &= \frac{\partial}{\partial g_n} \sum_{ij}
   \frac{1}{\sigma^2_{ij}} \left[ (g_j - g_i ) -
-    \boldsymbol{\bar{\Delta}_{ij}}\right](\delta_{mj} - \delta_{mi})
+    \boldsymbol{\bar{\Delta}_{ij}}\right](\delta_{mi} - \delta_{mj})
   \\ 
   &= \sum_{ij} \frac{1}{\sigma^2_{ij}} ( \delta_{nj} - \delta_{ni}
-  )(\delta_{mj} - \delta_{mi}) \\
-  &= \sum_{ij} \frac{1}{\sigma^2_{ij}} \left[ \delta_{nj} \delta_{mj}
-    - \delta_{nj}\delta_{mi} - \delta_{ni}\delta_{mj} + \delta_{ni}
-    \delta_{mi} \right] \\
+  )(\delta_{mi} - \delta_{mj}) \\
+  &= \sum_{ij} \frac{1}{\sigma^2_{ij}} \left[ \delta_{nj} \delta_{mi}
+    - \delta_{nj}\delta_{mj} - \delta_{ni}\delta_{mi} + \delta_{ni}
+    \delta_{mj} \right] \\
 \end{align}
