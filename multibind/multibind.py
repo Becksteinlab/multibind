@@ -18,7 +18,7 @@ class Multibind(object):
             self.graph = None
 
         self.cycle = None
-        self.concentations = {}
+        self.concentrations = {}
 
     def build_cycle(self, pH=5):
         """Constructs the cycle used for calculation"""
