@@ -1,0 +1,64 @@
+\section{Maximum likelihood estimation of the free energies of states}
+
+We start with the likelihood function, which defines the likelihood of
+seeing our measured results given a set of free energy values for the
+states in our network:
+
+\begin{equation}
+  L(\{\bar{\Delta}_{ij}\} | \{g_i\}) = \prod_{ij} \exp \left(
+  \frac{-1}{2 \sigma^2_{ij}} ((g_j - g_i) - \bar{\Delta}_{ij})^2 \right)
+  \label{likelihood}
+\end{equation}
+
+We want to use this function to find the most likely $\{g_i\}$ that
+fits our data. We can do this by taking the gradient in g-space,
+$\boldsymbol{\nabla}_g$, and setting it equal to the null
+vector. Since the likelihood function is monotonic, we can maximize
+the natural logarithm of (\ref{likelihood}), as this is will greatly
+simplify the mathematics. The log-likelihood is given by:
+
+\begin{equation}
+  \ln{L} = \sum_{ij} \frac{-1}{2\sigma^2_{ij}} ((g_j - g_i) -
+  \bar{\Delta}_{ij})^2
+  \label{logl}
+\end{equation}
+
+We define the gradient operator as:
+
+\begin{equation}
+  \boldsymbol \nabla_g \equiv \sum_k \boldsymbol{\hat{g}_k}
+  \frac{\partial}{\partial g_k}
+\end{equation}
+
+Taking the gradient of (\ref{logl}) and setting equal to the null
+vector, we find:
+
+\begin{align}
+  \boldsymbol{0} = \boldsymbol \nabla_g \ln L &= \sum_{ij}
+  \frac{-1}{2\sigma^2_{ij}} \boldsymbol \nabla_g ((g_j - g_i) -
+  \bar{\Delta}_{ij})^2 \\
+  &= \sum_{ij} \frac{-1}{\sigma^2_{ij}}
+  ((g_j - g_i) - \bar{\Delta}_{ij})\left[ \boldsymbol{\hat g_j}  -
+    \boldsymbol{\hat g_i} \right]  \\
+   &= \sum_{ij} \frac{1}{\sigma^2_{ij}}
+  ((g_j - g_i) - \bar{\Delta}_{ij})\left[ \boldsymbol{\hat g_i}  -
+    \boldsymbol{\hat g_j} \right] 
+\end{align}
+
+From here, we can compute $\{g_i\}$ numerically using
+\verb|scipy.optimize.root|, which uses the hybrid Powell method to
+find the roots of $\boldsymbol \nabla_g \ln L$. We provide the root
+function the jacobian, whose elements are:
+
+\begin{align}
+  J_{nm} = \frac{\partial}{\partial g_n} \left( \boldsymbol \nabla _{g}
+  \ln L \right)_m &= \frac{\partial}{\partial g_n} \sum_{ij}
+  \frac{1}{\sigma^2_{ij}} \left[ (g_j - g_i ) -
+    \boldsymbol{\bar{\Delta}_{ij}}\right](\delta_{mj} - \delta_{mi})
+  \\ 
+  &= \sum_{ij} \frac{1}{\sigma^2_{ij}} ( \delta_{nj} - \delta_{ni}
+  )(\delta_{mj} - \delta_{mi}) \\
+  &= \sum_{ij} \frac{1}{\sigma^2_{ij}} \left[ \delta_{nj} \delta_{mj}
+    - \delta_{nj}\delta_{mi} - \delta_{ni}\delta_{mj} + \delta_{ni}
+    \delta_{mi} \right] \\
+\end{align}
