@@ -1,0 +1,7 @@
+state1,state2,value,variance,ligand,standard_state
+S1U,S2U,6,0.1,H+,1
+S2U,S3U,7,0.5,H+,1
+S1B,S2B,6,0.1,H+,1
+S2B,S3B,7,0.5,H+,1
+S2U,S2B,34,0.1,Na+,1
+S3U,S3B,-6,2,Na+,1
