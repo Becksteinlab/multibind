@@ -10,7 +10,6 @@ class TestG(object):
         self.c.read_graph("../examples/input/4-state-diamond/graph.csv",comment="#")
         self.c.read_states("../examples/input/4-state-diamond/states.csv")
 
-
     def test_length(self):
         """Does the algorithm give us the right number of results..."""
         self.c.build_cycle()
@@ -26,5 +25,23 @@ class TestG(object):
                                0.0, -2.35510019160619])
         g_analytic = g_analytic - g_analytic[0]
         
-        npt.assert_almost_equal(self.c.g_mle,
-                                g_analytic)
+        npt.assert_almost_equal(self.c.g_mle,g_analytic)
+        
+    def test_microstate_probability(self):
+        self.c.build_cycle(pH=5)
+        self.c.MLE()
+        g_analytic = np.array([4.237564495703078, 1.987494501321176,
+                               0.0, -2.35510019160619])
+        g_analytic = g_analytic - g_analytic[0]
+
+        partition_function = np.sum(np.exp(-g_analytic))
+        numerators = np.exp(-g_analytic)
+        P = numerators/partition_function
+        calculated_P = np.exp(-self.c.g_mle)/np.sum(np.exp(-self.c.g_mle))
+        npt.assert_almost_equal(self.c.prob_mle.probability,P)
+            
+        
+
+        
+
+        

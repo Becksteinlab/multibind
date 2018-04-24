@@ -129,6 +129,8 @@ class Multibind(object):
 
         self.MLE_res = root(grad_log_likelihood, initial_guess, jac=jacobian)
         self.g_mle = self.MLE_res.x - self.MLE_res.x[0]
+        self.prob_mle = pd.DataFrame(np.exp(-self.g_mle)/np.sum(np.exp(-self.g_mle)),columns=["probability"])
+        self.prob_mle["name"] = self.states.name
         return self.MLE_res
 
     def effective_energy_difference(self, macrostate_class, state1, state2):
@@ -154,7 +156,7 @@ class Multibind(object):
         energies_2 = np.array([self.g_mle[i] for i in microstates_2_indices])
 
         return np.log(np.sum(np.exp(-energies_1))/np.sum(np.exp(-energies_2)))
-    
+
     def _parse(self, filename, comment=None):
         """Helper function to quickly parse CSV into a DataFrame"""
         try:
