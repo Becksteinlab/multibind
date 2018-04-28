@@ -2,6 +2,26 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
+class MultibindDriver(object):
+
+    def __init__(self, multibind):
+        if not type(multibind.states) is None and not type(multibind.graph) is None:
+            self.multibind = multibind
+        else:
+            raise ValueError("Multibind driver must be passed a Multibind object that has states and a graph file loaded.")
+
+    def create_tensor(self, pH_array):
+        num_states = self.multibind.states.name.shape[0]
+        self.tensor = np.zeros((num_states, num_states, len(pH_array)))
+        
+        for i,p in enumerate(pH_array):
+            self.multibind.build_cycle(pH=p)
+            self.multibind.MLE()
+            for j in range(self.tensor.shape[1]):
+                self.tensor[j,:,i] = self.multibind.g_mle - self.multibind.g_mle[j]
+
+            
+
 class Multibind(object):
 
     def __init__(self, states_filename=None, graph_filename=None):
