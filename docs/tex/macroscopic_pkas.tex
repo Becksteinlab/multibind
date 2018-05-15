@@ -21,7 +21,7 @@ hydrogen. Using the properties of logarithmic functions:
   pKa_m &\equiv -\log \left(\frac{[C^-][H^+]}{[CH] c_0} \right) \\
   &= -\log \left( \frac{[C^-]}{[CH]} \right) + pH \\
   &= -\log \left(\frac{P(C^-)}{P(CH)} \right) + pH \\
-  &= -\ln \left( \frac{P(C^-)}{P(CH)}/\ln(10) \right) + pH \\
+  &= -\ln \left( \frac{P(C^-)}{P(CH)} \right)/\ln(10) + pH \\
   &= -\frac{-\beta \Delta G_{C^-,CH}}{\ln 10} + pH
 \end{align*}
 
@@ -35,4 +35,36 @@ protonation, which is:
 \end{equation}
 
 where the $\delta_{N_s,N}$ and $\delta_{N_s,N-1}$ will pick out states
-that contain the correct number of protonated residues.
+that contain the correct number of protonated residues. For sake of
+clarity, we select as a reference energy, the energy any deprotonated
+microstate. The motivation for this choice becomes clear when
+considering the free energy of (microscopic)
+protonation/deprotonation. To protonated/deprotonate a residue, the free energy differnce is:
+
+\begin{equation}
+  \Delta G_{prot} = -\Delta G_{dep} = \beta^{-1} \ln(10)(pH-pKa)
+\end{equation}
+
+Consider a system of three protonatable residues. We will represent
+the protonation state by a string of 1s and 0s. For example, 111
+represents that state where all residues are protonated (N=3) while
+000 represents the state where no residues are protonated (N=0). These
+two examples, of course are macrostates with no degenerate
+microstates. We have two other macrostates of interest, N=1 and
+N=2. The N=1 macrostate has a three fold degeneracy (001,010,100) and
+the N=2 macrostate has a three fold degeneracy (011,101,110). In order
+to go from 001 to 010, we would be required to deprotonate residue
+three and then protonate residue two. The energy difference between
+these two microstates is then:
+
+\begin{equation}
+  \Delta G_{001,010} = \beta^{-1} \ln(10)\left[ (-pH + pKa_{000,001}) + (pH - pKa_{000,010}) \right] = \beta^{-1} \ln(10) \left[ pKa_{000,001} - pKa_{000,010}\right]
+\end{equation}
+
+A similar argument can be made for free energy difference between 001
+and 100. Because of this behavior, we see that the energy difference
+between two microstates is only dependent on the temperature and the
+difference of the pKas of each state. In the case of moving between
+microstates from different macrostates, there is a first order pH
+dependence, as well as a linear combination of pKas that is a function
+of the connectivity of the graph.
