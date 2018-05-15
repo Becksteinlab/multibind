@@ -1,0 +1,38 @@
+\section{Macroscopic pKas for a single ligand species}
+
+We would like to use the calculated effective energy differences to
+determine macroscopic pKas (i.e. the equilibrium constant that
+describes the populations of various macrostates). We will use proton
+binding as an example but note that this derivation can apply to any
+binding ligand as long as it is the sole binding species.
+
+We define the macroscopic pKa as:
+
+\begin{equation}
+  pKa_m \equiv -\log \left(\frac{[C^-][H^+]}{[CH] c_0} \right)
+\end{equation}
+
+Where $[C^-]$ is the concentration of protonated complexes, $[H^+]$ is
+the concentration of protons, $[CH]$ is the concentration of
+protonated complexes, and $c_0$ is the standard state concentration of
+hydrogen. Using the properties of logarithmic functions:
+
+\begin{align*}
+  pKa_m &\equiv -\log \left(\frac{[C^-][H^+]}{[CH] c_0} \right) \\
+  &= -\log \left( \frac{[C^-]}{[CH]} \right) + pH \\
+  &= -\log \left(\frac{P(C^-)}{P(CH)} \right) + pH \\
+  &= -\ln \left( \frac{P(C^-)}{P(CH)}/\ln(10) \right) + pH \\
+  &= -\frac{-\beta \Delta G_{C^-,CH}}{\ln 10} + pH
+\end{align*}
+
+where $\Delta G_{C^-,CH}$ is the effective free energy difference of
+protonation, which is: 
+
+\begin{equation}
+\Delta G_{N-1,N} = \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\beta
+    \Delta G_s)\delta_{N_s,N-1}}{\sum_s \exp(-\beta \Delta
+    G_s)\delta_{N_s,N}} \right]
+\end{equation}
+
+where the $\delta_{N_s,N}$ and $\delta_{N_s,N-1}$ will pick out states
+that contain the correct number of protonated residues.
