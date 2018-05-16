@@ -22,7 +22,7 @@ hydrogen. Using the properties of logarithmic functions:
   &= -\log \left( \frac{[C^-]}{[CH]} \right) + pH \\
   &= -\log \left(\frac{P(C^-)}{P(CH)} \right) + pH \\
   &= -\ln \left( \frac{P(C^-)}{P(CH)} \right)/\ln(10) + pH \\
-  &= -\frac{-\beta \Delta G_{C^-,CH}}{\ln 10} + pH
+  &= \frac{\beta \Delta G_{C^-,CH}}{\ln 10} + pH
 \end{align*}
 
 where $\Delta G_{C^-,CH}$ is the effective free energy difference of
@@ -32,6 +32,7 @@ protonation, which is:
 \Delta G_{N-1,N} = \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\beta
     \Delta G_s)\delta_{N_s,N-1}}{\sum_s \exp(-\beta \Delta
     G_s)\delta_{N_s,N}} \right]
+\label{macrostateenergydiff}
 \end{equation}
 
 where the $\delta_{N_s,N}$ and $\delta_{N_s,N-1}$ will pick out states
@@ -67,4 +68,27 @@ between two microstates is only dependent on the temperature and the
 difference of the pKas of each state. In the case of moving between
 microstates from different macrostates, there is a first order pH
 dependence, as well as a linear combination of pKas that is a function
-of the connectivity of the graph.
+of the connectivity of the graph. We can select any reference state we
+would like. In our case, we select any $\Delta G$ from the numerator
+of the argument of the natural logarithm. By doing this, all terms in
+the numerator have no pH dependence and are all just functions of the
+connectivity, which we will call $\eta_i$.
+
+We then find that (\ref{macrostateenergydiff}) can be written as:
+
+\begin{align*}
+  \Delta G_{N-1,N} &= \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \exp(-\ln(10)pH) \delta_{N_s,N-1}}{\sum_s \exp(-\eta_s) \delta_{N_s,N}} \right] \\
+  &= \beta^{-1} \ln \left[ \frac{\exp( - \ln(10)pH) \sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(-\eta_s) \delta_{N_s,N}} \right] \\
+  &= - \beta^{-1} \ln(10) pH + \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] 
+\end{align*}
+
+Plugging this into our expression for the $pKa_m$, we find that the pH
+dependence drops out and our result is:
+
+\begin{align*}
+  pKa_m = \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] / \ln(10)
+\end{align*}
+
+We conclude that the macroscopic pKas are independent of pH. More
+generally, we have shown that the macroscopic equilibrium constants
+are independent of the ligand concentration.
