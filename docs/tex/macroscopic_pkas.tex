@@ -22,7 +22,7 @@ hydrogen. Using the properties of logarithmic functions:
   &= -\log \left( \frac{[C^-]}{[CH]} \right) + pH \\
   &= -\log \left(\frac{P(C^-)}{P(CH)} \right) + pH \\
   &= -\ln \left( \frac{P(C^-)}{P(CH)} \right)/\ln(10) + pH \\
-  &= \frac{\beta \Delta G_{C^-,CH}}{\ln 10} + pH
+  &= -\frac{\beta \Delta G_{C^-,CH}}{\ln 10} + pH
 \end{align*}
 
 where $\Delta G_{C^-,CH}$ is the effective free energy difference of
@@ -77,16 +77,16 @@ connectivity, which we will call $\eta_i$.
 We then find that (\ref{macrostateenergydiff}) can be written as:
 
 \begin{align*}
-  \Delta G_{N-1,N} &= \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \exp(-\ln(10)pH) \delta_{N_s,N-1}}{\sum_s \exp(-\eta_s) \delta_{N_s,N}} \right] \\
-  &= \beta^{-1} \ln \left[ \frac{\exp( - \ln(10)pH) \sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(-\eta_s) \delta_{N_s,N}} \right] \\
-  &= - \beta^{-1} \ln(10) pH + \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] 
+  \Delta G_{N-1,N} &= \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(-\ln(10)\,pH)\exp(-\eta_s) \delta_{N_s,N}} \right] \\
+  &= \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\exp(-\ln(10)\,pH) \sum_s \exp(-\eta_s) \delta_{N_s,N}} \right] \\
+  &= \beta^{-1} \ln(10) pH + \beta^{-1} \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] 
 \end{align*}
 
 Plugging this into our expression for the $pKa_m$, we find that the pH
 dependence drops out and our result is:
 
 \begin{align*}
-  pKa_m = \ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] / \ln(10)
+  pKa_m = -\ln \left[ \frac{\sum_s \exp(-\eta_s) \delta_{N_s,N-1}}{\sum_s \exp(- \eta_s) \delta_{N_s,N}} \right] / \ln(10)
 \end{align*}
 
 We conclude that the macroscopic pKas are independent of pH. More
