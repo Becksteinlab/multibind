@@ -51,15 +51,15 @@ class Multibind(object):
             raise RuntimeError(msg)
 
         # Select all ligands that are not H+ and check if their concentrations
-        # have been defined in the concentations dictionary
+        # have been defined in the concentrations dictionary
         ligands = np.array(self.graph.ligand[(self.graph.ligand != "H+") & (self.graph.ligand != "h+")])
-        ligand_map = [x in self.concentations.keys() for x in ligands]
-        # if there are undefined ligand concentations, raise an error and
+        ligand_map = [x in self.concentrations.keys() for x in ligands]
+        # if there are undefined ligand concentrations, raise an error and
         # warn the user
         if not all(ligand_map):
             missing_ligands = ligands[[not i for i in ligand_map]]
-            msg =  "Missing ligand concentations for: {0}\n".format(" ".join(missing_ligands))
-            msg += "Set them using the `concentations` attribute"
+            msg =  "Missing ligand concentrations for: {0}\n".format(" ".join(missing_ligands))
+            msg += "Set them using the `concentrations` attribute"
             raise RuntimeError(msg)
 
         G = nx.DiGraph()
