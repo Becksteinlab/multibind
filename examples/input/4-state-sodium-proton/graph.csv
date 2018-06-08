@@ -1,0 +1,5 @@
+state1,state2,value,variance,ligand,standard_state
+1,2,-10,0.1,Na+,1
+2,3,5.697116,0.1,H+,1
+4,3,-6,0.1,Na+,1
+1,4,7.434294,0.1,H+,1
