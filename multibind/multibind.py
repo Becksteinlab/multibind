@@ -139,16 +139,17 @@ class Multibind(object):
             return J
         
         # use dijkstra_path to get the initial guess
-        initial_guess = np.zeros(N)
+        self.initial_guess = np.zeros(N)
         for i in range(1,N):
             edge_energies = nx.get_edge_attributes(self.cycle, 'energy')
             edge_var = nx.get_edge_attributes(self.cycle, 'weight')
             path = nx.dijkstra_path(self.cycle, self.states.name[0], self.states.name[i])
             linked = [(path[j],path[j+1]) for j,_ in enumerate(path[:-1])]
-            initial_guess[i] = sum([edge_energies[x] for x in linked])
+            self.initial_guess[i] = sum([edge_energies[x] for x in linked])
 
-        self.MLE_res = root(grad_log_likelihood, initial_guess, jac=jacobian)
+        self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian)
         self.g_mle = self.MLE_res.x - self.MLE_res.x[0]
+        self.mle_linear_distortion = self.g_mle - (self.initial_guess - self.initial_guess[0])
         self.prob_mle = pd.DataFrame(np.exp(-self.g_mle)/np.sum(np.exp(-self.g_mle)),columns=["probability"])
         self.prob_mle["name"] = self.states.name
         return self.MLE_res
