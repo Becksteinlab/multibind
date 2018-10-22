@@ -52,7 +52,7 @@ class Multibind(object):
 
         # Select all ligands that are not H+ and check if their concentrations
         # have been defined in the concentrations dictionary
-        ligands = np.array(self.graph.ligand[(self.graph.ligand != "H+") & (self.graph.ligand != "h+")])
+        ligands = np.array(self.graph.ligand[(self.graph.ligand != "helm") & (self.graph.ligand != "H+") & (self.graph.ligand != "h+")])
         ligand_map = [x in self.concentrations.keys() for x in ligands]
         # if there are undefined ligand concentrations, raise an error and
         # warn the user
@@ -75,6 +75,10 @@ class Multibind(object):
             if ligand.lower() == "h+":
                 energy = np.log(10)*(pH-value)
                 var = np.log(10)**2 * variance
+            # using a direct helmholtz free energy
+            elif ligand == "helm":
+                energy = value
+                var = variance
             # dealing with binding energies
             else:
                 energy = value - np.log(self.concentrations[ligand]/standard_state)
