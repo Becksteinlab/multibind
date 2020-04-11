@@ -6,6 +6,6 @@ setup(name="multibind",
       author="Ian Kenney",
       author_email="ian.kenney@asu.edu",
       packages=find_packages(),
-      install_requires=['numpy', 'networkx', 'pandas', 'matplotlib','scipy'],
+      install_requires=['tqdm', 'numpy', 'networkx', 'pandas', 'matplotlib','scipy'],
       tests_require=['pytest']
 )

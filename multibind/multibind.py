@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
+from random import randint
+from tqdm import tqdm 
 
 class MultibindDriver(object):
 
@@ -157,6 +159,73 @@ class Multibind(object):
         self.prob_mle = pd.DataFrame(np.exp(-self.g_mle)/np.sum(np.exp(-self.g_mle)),columns=["probability"])
         self.prob_mle["name"] = self.states.name
         return self.MLE_res
+
+    def MLE_dist(self, N_steps=int(1e6), nt=1):
+        """Run Monte-Carlo steps to assess quality of MLE results. 
+        """
+
+        def potential(g_t):
+            potential = 0
+            # factor that will be added to one node and subtracted from another
+            # indices of state vector
+            # Iterate over all connections
+            for r in self.graph.index:
+                state1, state2, value, variance, ligand, standard_state = self.graph.iloc[r]
+                i = self.states[self.states.name == state1].index[0]
+                j = self.states[self.states.name == state2].index[0]
+                
+                gj = g_t[j]
+                gi = g_t[i]
+                
+                edge_attr = self.cycle.edges()[(state1,state2)]
+                deltaij = edge_attr['energy'] # measured difference
+                varij = edge_attr['weight'] # measured variance
+                
+                potential += - 1 / (2*varij) * ((gj - gi) - deltaij)**2                                
+                
+            return potential
+
+
+        def accept(ns, cs):
+            potential_ns = potential(ns)
+            potential_cs = potential(cs)
+
+            diff = potential_cs - potential_ns
+            prob = min([1, np.exp(-50*diff)])
+            return np.random.random_sample() <= prob
+
+        def compute(self, N_steps=N_steps):
+            current_state = self.g_mle.copy()
+            new_state = current_state.copy()
+            step = 1
+            accepted = 0
+            rejected = 0
+            Nstates = len(new_state)
+            dist = np.zeros((N_steps-1, Nstates))
+            pbar = tqdm(total=N_steps, position=0)
+            while step < N_steps:
+                # select random state to mutate
+                state = randint(0, Nstates-1)
+                # mutate state 
+                disp = np.random.normal(0, 0.01)
+                new_state[state] = new_state[state] + disp
+                # accept/reject change
+                if accept(new_state, current_state):
+                    current_state = new_state.copy()
+                    dist[step-1] = current_state[:]
+                    pbar.update(1)
+                    step += 1
+                    accepted += 1 
+                else:
+                    new_state = current_state.copy()
+                    rejected += 1
+            pbar.close()
+            print("Accepted: ", accepted)
+            print("Rejected: ", rejected)
+            return dist
+
+        return compute(self)
+
 
     def effective_energy_difference(self, macrostate_class, state1, state2):
         """Calculate the effective binding energy between two states.
