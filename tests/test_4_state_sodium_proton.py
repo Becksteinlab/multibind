@@ -19,7 +19,6 @@ class TestG(object):
 
     def test_pH_7(self):
         self.c.build_cycle(pH=7)
-        print(self.c.graph)
         self.c.MLE()
         # Found from maxima script
         # mb will output this order because of the state file order [g1, g2, g4, g3]

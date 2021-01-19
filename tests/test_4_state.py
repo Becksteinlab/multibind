@@ -52,7 +52,6 @@ class TestDriver(object):
 
     def test_diag(self):
         for j in range(self.driver.tensor.shape[1]):
-            print(self.driver.tensor[:,:,j])
             assert np.sum(np.diagonal(self.driver.tensor[:,:,j])) == 0.0
 
         
