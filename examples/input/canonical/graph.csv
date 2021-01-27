@@ -1,0 +1,5 @@
+state1,state2,value,variance,ligand,standard_state
+1,2,3,1,helm,1
+2,3,6,4,helm,1
+4,3,6,1,helm,1
+1,4,4,0.25,helm,1
