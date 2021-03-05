@@ -12,6 +12,7 @@ def rate_matrix(filename: str):
     ----------
     filename : str
         path to the CSV file containing the state names and connections in the form of rates
+        Note that the order of input rates matters.
 
     Returns
     -------
@@ -115,19 +116,7 @@ def rate_matrix(filename: str):
 
             assert np.isclose(dg, np.log(_k_ji / _k_ij)), (dg, np.log(_k_ji / _k_ij))
 
-            forward.append(_k_ij)
-            reverse.append(_k_ji)
-
             _rate_matrix[_i, _j] = _k_ij
             _rate_matrix[_j, _i] = _k_ji
-
-        numerator = 1
-        denominator = 1
-
-        for k in range(len(forward)):
-            numerator *= forward[k]
-            denominator *= reverse[k]
-
-        assert np.isclose(numerator / denominator, 1)
 
         return c, _rate_matrix
