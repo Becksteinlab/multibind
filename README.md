@@ -1,5 +1,9 @@
 # Multibind
 
+
+[![DOI](https://zenodo.org/badge/301552078.svg)](https://zenodo.org/badge/latestdoi/301552078)
+
+
 Thermodynamic cycles which are defined by a set of individually determined free energy differences are not guaranteed to be thermodynamically consistent.
 This criterion is only satisfied when all the differences in a closed loop vanish.
 Multibind is a Python package that allows for the combination of these differences, along with their variances, into a set of data-informed and thermodynamically consistent state free energies.
