@@ -7,7 +7,16 @@ from tqdm import tqdm
 
 class MultibindDriver(object):
 
+    """Class to quickly run multibind over a range of pH values"""
+
     def __init__(self, multibind):
+        """
+        Parameters
+        ----------
+        multibind : Multibind
+            A multibind object with its states and graph attributed defined.
+
+        """
         if not type(multibind.states) is None and not type(multibind.graph) is None:
             self.multibind = multibind
         else:
@@ -15,6 +24,18 @@ class MultibindDriver(object):
                 "Multibind driver must be passed a Multibind object that has states and a graph file loaded.")
 
     def create_tensor(self, pH_array):
+        """Create a tensor containing state free energies across a pH range.
+
+        Parameters
+        ----------
+        pH_array : iterable
+            An iterable containing the pH values to calculate binding free energies for.
+
+        Returns
+        -------
+        None
+
+        """
         num_states = self.multibind.states.name.shape[0]
         self.tensor = np.zeros((num_states, num_states, len(pH_array)))
 
@@ -28,8 +49,14 @@ class MultibindDriver(object):
 class Multibind(object):
 
     def __init__(self, states_filename=None, graph_filename=None):
-        # If states are specified in a CSV, may as well fill them in
-        # here. The same goes for the graph information
+        """
+        Parameters
+        ----------
+        states_filename : str (optional)
+            Path the CSV containing the states of the graph.
+        graph_filename : str (optional)
+            Path to the CSV containing the graph data for the network.
+        """
         if states_filename:
             self.read_states(states_filename)
         else:
@@ -44,10 +71,20 @@ class Multibind(object):
         self.concentrations = {}
 
     def build_cycle(self, pH=5):
-        """Constructs the cycle used for calculation"""
+        """Constructs the cycle used for calculation
+
+        Parameters
+        ----------
+        pH : float | int
+            The pH to calculate binding free energies over.
+
+        Returns
+        -------
+        None
+        """
 
         # Determine if we have enough information to continue,
-        # ie states information and graph information
+        # i.e. states information and graph information
         if type(self.states) is None or type(self.graph) is None:
             msg = "Need to specify both the state and graph \
             information. Try using `read_states` and `read_graph`."
@@ -169,6 +206,16 @@ class Multibind(object):
 
     def MLE_dist(self, N_steps=int(1e6), nt=1):
         """Run Monte-Carlo steps to assess quality of MLE results.
+
+        Parameters
+        ----------
+        N_steps : int
+            The number of Monte-Carlo steps to perform.
+
+        Returns
+        -------
+        ndarray with the distribution of free energy values for the states.
+
         """
 
         def potential(g_t):
@@ -236,14 +283,17 @@ class Multibind(object):
         """Calculate the effective binding energy between two states.
 
         Parameters
-        ==========
-        macrostate_class : name of macrostate class (i.e. number of protons)
-        state1 : first, 'starting' state
-        state2 : second, 'destination' state
+        ----------
+        macrostate_class : str
+            Name of macrostate class (i.e. number of protons)
+        state1 : str
+            first, 'starting' state
+        state2 : str
+            second, 'destination' state
 
         Returns
-        =======
-        float : binding free energy in kT
+        -------
+        float : macroscopic free energy difference in kT
         """
 
         macrostate_class = str(macrostate_class)
@@ -264,26 +314,31 @@ class Multibind(object):
             raise e(f"Could not parse file {filename}")
 
     def read_states(self, filename, comment=None):
-        """Read in state information from a state CSV file
+        """Read in state information from a state CSV file.
 
         Parameters
-        ==========
-        filename : string with the file path
+        ----------
+        filename : str
+            Path to the state CSV file.
+
+        Returns
+        -------
+        None
         """
         self.states = self._parse(filename, comment=comment)
         self.states['name'] = self.states['name'].astype('str')
 
     def read_graph(self, filename, comment=None):
-        """Read in the graph information from a graph CSV file
+        """Read in the graph information from a graph CSV file.
 
         Parameters
-        ==========
-        filename : string with the file path
+        ----------
+        filename : str
+            File path of the graph CSV
 
         Returns
-        =======
-        DataFrame with graph information (accessible using `graph`
-        attribute)
+        -------
+        None
         """
         self.graph = self._parse(filename, comment=comment)
         self.graph['state1'] = self.graph['state1'].astype('str')

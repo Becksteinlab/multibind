@@ -6,7 +6,10 @@ import numpy as np
 
 
 def rate_matrix(filename: str):
-    """
+    """Build a rate matrix from a connectivity file with rates.
+
+    The rates are converted into free energy differences between states and
+    then made thermodynamically consistent.
 
     Parameters
     ----------
@@ -42,8 +45,7 @@ def rate_matrix(filename: str):
 
             # find all unique edges. Implicitly assumes that forward rates appear first...
             # todo add this to the docstring
-            _edges.append((state1, state2)) if (
-                        (state1, state2) not in _edges and (state2, state1) not in _edges) else None
+            _edges.append((state1, state2)) if ((state1, state2) not in _edges and (state2, state1) not in _edges) else None
 
         states = pd.DataFrame({'name': _states})  # create dataframe for states, which only needs the names
 
@@ -89,9 +91,6 @@ def rate_matrix(filename: str):
 
         states, connections, g = c.states.name.values, c.graph[['state1', 'state2']].values, c.g_mle
 
-        forward = []
-        reverse = []
-
         n = states.shape[0]
         _rate_matrix = np.zeros((n, n))
 
@@ -104,11 +103,11 @@ def rate_matrix(filename: str):
             b_weight = np.exp(-dg)
             try:
                 s_ijji = var_ij / var_ji
-            except ZeroDivisionError as e:
+            except ZeroDivisionError:
                 s_ijji = 1e12
             try:
                 s_jiij = 1 / s_ijji
-            except ZeroDivisionError as e:
+            except ZeroDivisionError:
                 s_jiij = 1e12
 
             _k_ji = k_ij / (b_weight + s_ijji / b_weight ** 2) + k_ji / (b_weight ** 2 * s_jiij + 1)
