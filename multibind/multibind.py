@@ -310,8 +310,12 @@ class Multibind(object):
         """Helper function to quickly parse CSV into a DataFrame"""
         try:
             return pd.read_csv(filename, comment=comment)
+        except pd.errors.EmptyDataError:
+            mesg = f'Provided data file \'{filename}\' was empty'
+            raise ValueError(mesg)
         except Exception as e:
-            raise e(f"Could not parse file {filename}")
+            print(f'Could not parse file {filename}')
+            raise e
 
     def read_states(self, filename, comment=None):
         """Read in state information from a state CSV file.
