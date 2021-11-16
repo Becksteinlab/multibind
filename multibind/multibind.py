@@ -55,8 +55,9 @@ class Multibind(object):
 
         # Select all ligands that are not H+ and check if their concentrations
         # have been defined in the concentrations dictionary
-        ligands = np.array(self.graph.ligand[(self.graph.ligand != "helm") & (self.graph.ligand != "H+") & (
-                self.graph.ligand != "h+")])
+        ligands = np.array(self.graph.ligand[(self.graph.ligand != "helm")
+                                             & (self.graph.ligand != "H+")
+                                             & (self.graph.ligand != "h+")])
         ligand_map = [x in self.concentrations.keys() for x in ligands]
         # if there are undefined ligand concentrations, raise an error and
         # warn the user
@@ -106,7 +107,7 @@ class Multibind(object):
 
         def grad_log_likelihood(g_t):
             """Returns the gradient of the log likelihood function.
-            
+
             g_t : array of theoretical values for g
             """
             # state vector [g1, g2, g3, ... , gn-1, gn]
@@ -146,8 +147,7 @@ class Multibind(object):
                         state1, state2, value, variance, ligand, standard_state = self.graph.iloc[k]
                         i = self.states[self.states.name == state1].index[0]
                         j = self.states[self.states.name == state2].index[0]
-                        kdelta_factor = kd(n, j) * kd(m, i) - kd(n, j) * kd(m, j) - kd(n, i) * kd(m, i) + kd(n, i) * kd(
-                            m, j)
+                        kdelta_factor = kd(n, j) * kd(m, i) - kd(n, j) * kd(m, j) - kd(n, i) * kd(m, i) + kd(n, i) * kd(m, j)
                         J[n, m] += 1 / variance * kdelta_factor
             return J
 
@@ -168,7 +168,7 @@ class Multibind(object):
         return self.MLE_res
 
     def MLE_dist(self, N_steps=int(1e6), nt=1):
-        """Run Monte-Carlo steps to assess quality of MLE results. 
+        """Run Monte-Carlo steps to assess quality of MLE results.
         """
 
         def potential(g_t):
@@ -212,7 +212,7 @@ class Multibind(object):
             while step < N_steps:
                 # select random state to mutate
                 state = randint(0, Nstates - 1)
-                # mutate state 
+                # mutate state
                 disp = np.random.normal(0, 0.01)
                 new_state[state] = new_state[state] + disp
                 # accept/reject change
@@ -234,7 +234,7 @@ class Multibind(object):
 
     def effective_energy_difference(self, macrostate_class, state1, state2):
         """Calculate the effective binding energy between two states.
-        
+
         Parameters
         ==========
         macrostate_class : name of macrostate class (i.e. number of protons)
