@@ -1,7 +1,6 @@
-import pytest
 import numpy.testing as npt
 import multibind as mb
-import numpy as np
+
 
 class TestG(object):
 
@@ -23,7 +22,4 @@ class TestG(object):
         # Found from maxima script
         # mb will output this order because of the state file order [g1, g2, g4, g3]
         dg_analytic = -8.73532566405552
-        npt.assert_almost_equal(self.c.effective_energy_difference("bound","unbound","bound"),dg_analytic, decimal=5)
-        
-
-        
+        npt.assert_almost_equal(self.c.effective_energy_difference("bound", "unbound", "bound"), dg_analytic, decimal=5)

@@ -1,13 +1,13 @@
-import pytest
 import numpy.testing as npt
 import multibind as mb
 import numpy as np
+
 
 class TestG(object):
 
     def setup(self):
         self.c = mb.Multibind()
-        self.c.read_graph("../examples/input/4-state-diamond/graph.csv",comment="#")
+        self.c.read_graph("../examples/input/4-state-diamond/graph.csv", comment="#")
         self.c.read_states("../examples/input/4-state-diamond/states.csv")
 
     def test_length(self):
@@ -16,17 +16,28 @@ class TestG(object):
         self.c.MLE()
         assert len(self.c.g_mle) == 4
 
-    def test_pH_5(self):
+    def test_pH_5_svd(self):
         self.c.build_cycle(pH=5)
-        self.c.MLE()
+        self.c.MLE(svd=True)
         # Found from maxima script
         # mb will output this order because of the state file order [g1, g2, g4, g3]
         g_analytic = np.array([4.237564495703078, 1.987494501321176,
                                0.0, -2.35510019160619])
         g_analytic = g_analytic - g_analytic[0]
-        
-        npt.assert_almost_equal(self.c.g_mle,g_analytic)
-        
+
+        npt.assert_almost_equal(self.c.g_mle, g_analytic)
+
+    def test_pH_5_NR(self):
+        self.c.build_cycle(pH=5)
+        self.c.MLE(svd=False)
+        # Found from maxima script
+        # mb will output this order because of the state file order [g1, g2, g4, g3]
+        g_analytic = np.array([4.237564495703078, 1.987494501321176,
+                               0.0, -2.35510019160619])
+        g_analytic = g_analytic - g_analytic[0]
+
+        npt.assert_almost_equal(self.c.g_mle, g_analytic)
+
     def test_microstate_probability(self):
         self.c.build_cycle(pH=5)
         self.c.MLE()
@@ -36,24 +47,20 @@ class TestG(object):
 
         partition_function = np.sum(np.exp(-g_analytic))
         numerators = np.exp(-g_analytic)
-        P = numerators/partition_function
-        calculated_P = np.exp(-self.c.g_mle)/np.sum(np.exp(-self.c.g_mle))
-        npt.assert_almost_equal(self.c.prob_mle.probability,P)
-        
+        P = numerators / partition_function
+        npt.assert_almost_equal(self.c.prob_mle.probability, P)
+
+
 class TestDriver(object):
 
     def setup(self):
         self.c = mb.Multibind()
-        self.c.read_graph("../examples/input/4-state-diamond/graph.csv",comment="#")
+        self.c.read_graph("../examples/input/4-state-diamond/graph.csv", comment="#")
         self.c.read_states("../examples/input/4-state-diamond/states.csv")
         self.driver = mb.MultibindDriver(self.c)
-        self.pH_range = np.arange(4,5,0.25)
+        self.pH_range = np.arange(4, 5, 0.25)
         self.driver.create_tensor(self.pH_range)
 
     def test_diag(self):
         for j in range(self.driver.tensor.shape[1]):
-            assert np.sum(np.diagonal(self.driver.tensor[:,:,j])) == 0.0
-
-        
-
-        
+            assert np.sum(np.diagonal(self.driver.tensor[:, :, j])) == 0.0

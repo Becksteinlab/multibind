@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from numpy.linalg import pinv
 import networkx as nx
 from random import randint
 from tqdm import tqdm
@@ -132,7 +133,7 @@ class Multibind(object):
 
         self.cycle = G
 
-    def MLE(self):
+    def MLE(self, svd=True):
         """Performs a maximum likelihood estimation on the current cycle"""
 
         from scipy.optimize import root
@@ -197,8 +198,33 @@ class Multibind(object):
             linked = [(path[j], path[j + 1]) for j, _ in enumerate(path[:-1])]
             self.initial_guess[i] = sum([edge_energies[x] for x in linked])
 
-        self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian)
-        self.g_mle = self.MLE_res.x - self.MLE_res.x[0]
+        if svd:
+            B = np.zeros((N))
+            A = np.zeros((N, N))
+
+            for r in self.graph.index:
+                state1, state2, _, _, _, _ = self.graph.iloc[r]
+                i = self.states[self.states.name == state1].index[0]
+                j = self.states[self.states.name == state2].index[0]
+
+                edge_attr = self.cycle.edges()[(state1, state2)]
+                deltaij = edge_attr['energy']  # measured difference
+                varij = edge_attr['weight']  # measured variance
+
+                B[i] += -deltaij / varij
+                B[j] += deltaij / varij
+
+                A[i, i] += 1 / varij
+                A[j, j] += 1 / varij
+                A[i, j] += -1 / varij
+                A[j, i] += -1 / varij
+
+            A_inv = pinv(A, hermitian=True)
+            self.MLE_res = A_inv @ B
+        else:
+            self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian).x
+
+        self.g_mle = self.MLE_res - self.MLE_res[0]
         self.mle_linear_distortion = self.g_mle - (self.initial_guess - self.initial_guess[0])
         self.prob_mle = pd.DataFrame(np.exp(-self.g_mle) / np.sum(np.exp(-self.g_mle)), columns=["probability"])
         self.prob_mle["name"] = self.states.name
