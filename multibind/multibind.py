@@ -70,6 +70,7 @@ class MultibindScanner(object):
 
         N_states = len(self.c.states)
         res = np.zeros([N_states] + [len(i) for i in values])
+        res_prob = np.zeros_like(res)
 
         pH = 0
 
@@ -92,6 +93,9 @@ class MultibindScanner(object):
             self.c.MLE(svd=svd)
             _filter = (slice(0, None), *c)
             res[_filter] = self.c.g_mle
+            weights = np.exp(-res[_filter])
+            Z = weights.sum()
+            res_prob[_filter] = weights / Z
 
         coords = OrderedDict()
         coords['state'] = self.c.states.values[:, 0]
@@ -104,12 +108,16 @@ class MultibindScanner(object):
                 free_energy=(
                     ['state', *names], res
                 ),
+                microstate_probs=(
+                    ['state', *names], res_prob
+                ),
             ),
             coords=coords,
         )
 
     def effective_energy_difference(self, category, state1, state2, **kwargs):
-        raise NotImplementedError
+        self.c.g_mle = self.results.free_energy.sel(**kwargs).values
+        return self.c.effective_energy_difference(category, state1, state2)
 
     def _validate_ranges(self, concentrations):
         """Used to check the provided concentrations before executing the `run` method.
