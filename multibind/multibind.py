@@ -4,52 +4,127 @@ from numpy.linalg import pinv
 import networkx as nx
 from random import randint
 from tqdm import tqdm
+from xarray import Dataset
+from itertools import product
+from collections import OrderedDict
 
 
-class MultibindDriver(object):
+class InvalidConcentrationError(Exception):
+    pass
 
-    """Class to quickly run multibind over a range of pH values"""
 
-    def __init__(self, multibind):
-        """
-        Parameters
-        ----------
-        multibind : Multibind
-            A multibind object with its states and graph attributed defined.
+class MultibindScanner(object):
 
-        """
-        if not type(multibind.states) is None and not type(multibind.graph) is None:
-            self.multibind = multibind
-        else:
-            raise ValueError(
-                "Multibind driver must be passed a Multibind object that has states and a graph file loaded.")
+    """Run multibind across a range concentrations."""
 
-    def create_tensor(self, pH_array):
-        """Create a tensor containing state free energies across a pH range.
+    def __init__(self, statefile, graphfile, comment_char='#'):
+        self.c = Multibind(states_filename=statefile, graph_filename=graphfile, comment_char=comment_char)
+
+    def run(self, concentrations: dict, svd=True):
+        """Create an xarray dataset containing thermodynamic properties as a
+        function of varying concentrations.
 
         Parameters
         ----------
-        pH_array : iterable
-            An iterable containing the pH values to calculate binding free energies for.
+        concentrations : dict
+            Dictionary containing the concentrations to scan over.
+
+            Two input forms are valid. A dictionary with two items will be interpreted as an outer product.
+            A dictionary with one item will be interpreted as specific points.
+
+            e.g. (('H+', 'Na+'): [(1, 0.250), (2, 0.150), (3, 0.100)]) will indicate that three graphs will be
+            solved. One with pH = 1 and [Na+] = 0.250 M, another with pH = 2 and [Na+] = 0.150 M, and the last being pH = 3 and [Na+] = 0.100 M.
+
+            {'H+' : [1, 2, 3, 4, 5], 'Na+' : [0.250, 0.150, 0.100]} will indicate that 15 graphs will be solved.
+            The pairs will be the outer product of the two arrays.
+
+        svd : bool (optional)
+            Whether or not to use SVD to solve the graph. Otherwise use Newton-Raphson.
 
         Returns
         -------
-        None
+        xarray DataSet
+        """
+
+        if type(concentrations) is list or type(concentrations) is tuple:
+            raise NotImplementedError
+
+        elif isinstance(concentrations, dict):
+            names = []
+            values = []
+
+            for k, v in concentrations.items():
+                if k == 'H+':
+                    names.append('pH')
+                else:
+                    names.append(k)
+                values.append(v)
+
+            grid = list(product(*values))
+            indices = list(product(*[list(range(len(i))) for i in values]))
+        else:
+            msg = "Could not determined range selection scheme from `concentrations`"
+            raise ValueError(msg)
+
+        self._validate_ranges(concentrations)
+
+        N_states = len(self.c.states)
+        res = np.zeros([N_states] + [len(i) for i in values])
+
+        pH = 0
+
+        for g, c in zip(grid, indices):
+            # using OrderedDict as a precaution mostly since
+            # the shapes of the output can vary wildly
+            conc = OrderedDict()
+            coords = []
+
+            for i, n in enumerate(names):
+                if n == 'pH' or n.upper() == 'H+':
+                    pH = g[i]
+                    coords.append(i)
+                    continue
+                conc[n] = g[i]
+                coords.append(i)
+
+            self.c.concentrations = conc
+            self.c.build_cycle(pH=pH)
+            self.c.MLE(svd=svd)
+            _filter = (slice(0, None), *c)
+            res[_filter] = self.c.g_mle
+
+        coords = OrderedDict()
+        coords['state'] = self.c.states.values[:, 0]
+
+        for k, v in zip(names, values):
+            coords[k] = v
+
+        self.results = Dataset(
+            data_vars=dict(
+                free_energy=(
+                    ['state', *names], res
+                ),
+            ),
+            coords=coords,
+        )
+
+    def effective_energy_difference(self, category, state1, state2, **kwargs):
+        raise NotImplementedError
+
+    def _validate_ranges(self, concentrations):
+        """Used to check the provided concentrations before executing the `run` method.
 
         """
-        num_states = self.multibind.states.name.shape[0]
-        self.tensor = np.zeros((num_states, num_states, len(pH_array)))
 
-        for i, p in enumerate(pH_array):
-            self.multibind.build_cycle(pH=p)
-            self.multibind.MLE()
-            for j in range(self.tensor.shape[1]):
-                self.tensor[j, :, i] = self.multibind.g_mle - self.multibind.g_mle[j]
+        for k, v in concentrations.items():
+            for i in v:
+                if i < 0:
+                    raise InvalidConcentrationError
 
 
 class Multibind(object):
 
-    def __init__(self, states_filename=None, graph_filename=None):
+    def __init__(self, states_filename=None, graph_filename=None, comment_char='#'):
         """
         Parameters
         ----------
@@ -59,12 +134,12 @@ class Multibind(object):
             Path to the CSV containing the graph data for the network.
         """
         if states_filename:
-            self.read_states(states_filename)
+            self.read_states(states_filename, comment=comment_char)
         else:
             self.states = None
 
         if graph_filename:
-            self.read_graph(graph_filename)
+            self.read_graph(graph_filename, comment=comment_char)
         else:
             self.graph = None
 
@@ -134,9 +209,7 @@ class Multibind(object):
         self.cycle = G
 
     def MLE(self, svd=True):
-        """Performs a maximum likelihood estimation on the current cycle"""
-
-        from scipy.optimize import root
+        """Performs a maximum likelihood estimation on the current graph"""
 
         N = len(self.states.name)
 
@@ -222,6 +295,7 @@ class Multibind(object):
             A_inv = pinv(A, hermitian=True)
             self.MLE_res = A_inv @ B
         else:
+            from scipy.optimize import root
             self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian).x
 
         self.g_mle = self.MLE_res - self.MLE_res[0]
