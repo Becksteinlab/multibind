@@ -49,18 +49,3 @@ class TestG(object):
         numerators = np.exp(-g_analytic)
         P = numerators / partition_function
         npt.assert_almost_equal(self.c.prob_mle.probability, P)
-
-
-class TestDriver(object):
-
-    def setup(self):
-        self.c = mb.Multibind()
-        self.c.read_graph("../examples/input/4-state-diamond/graph.csv", comment="#")
-        self.c.read_states("../examples/input/4-state-diamond/states.csv")
-        self.driver = mb.MultibindDriver(self.c)
-        self.pH_range = np.arange(4, 5, 0.25)
-        self.driver.create_tensor(self.pH_range)
-
-    def test_diag(self):
-        for j in range(self.driver.tensor.shape[1]):
-            assert np.sum(np.diagonal(self.driver.tensor[:, :, j])) == 0.0
