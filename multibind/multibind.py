@@ -30,7 +30,7 @@ class MultibindScanner(object):
             Dictionary containing the concentrations to scan over.
 
             Two input forms are valid. A dictionary with two items will be interpreted as an outer product.
-            A dictionary with one item will be interpreted as specific points.
+            A dictionary with one item will be interpreted as specific points (not implemented yet).
 
             e.g. (('H+', 'Na+'): [(1, 0.250), (2, 0.150), (3, 0.100)]) will indicate that three graphs will be
             solved. One with pH = 1 and [Na+] = 0.250 M, another with pH = 2 and [Na+] = 0.150 M, and the last being pH = 3 and [Na+] = 0.100 M.
@@ -39,7 +39,7 @@ class MultibindScanner(object):
             The pairs will be the outer product of the two arrays.
 
         svd : bool (optional)
-            Whether or not to use SVD to solve the graph. Otherwise use Newton-Raphson.
+            Whether or not to use SVD to solve the graph. Otherwise use Newton-Raphson. Defaults to True.
 
         Returns
         -------
@@ -126,7 +126,10 @@ class MultibindScanner(object):
 
         for k, v in concentrations.items():
             for i in v:
-                if i < 0:
+                # since H+ is interpreted as a pH, we have to include all values
+                if k in ('H+', 'pH'):
+                    continue
+                if i <= 0:
                     raise InvalidConcentrationError
 
 
