@@ -15,7 +15,7 @@ class InvalidConcentrationError(Exception):
 
 class MultibindScanner(object):
 
-    """Run multibind across a range concentrations."""
+    """Run multibind across a range of concentrations."""
 
     def __init__(self, statefile, graphfile, comment_char='#'):
         self.c = Multibind(states_filename=statefile, graph_filename=graphfile, comment_char=comment_char)
