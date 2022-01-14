@@ -110,7 +110,7 @@ def rate_matrix(filename: str):
             except ZeroDivisionError:
                 s_jiij = 1e12
 
-            _k_ji = k_ij / (b_weight + s_ijji / b_weight ** 2) + k_ji / (b_weight ** 2 * s_jiij + 1)
+            _k_ji = k_ji / (1 + s_jiij * b_weight**2) + k_ij / (s_ijji / b_weight + b_weight)
             _k_ij = _k_ji * b_weight
 
             assert np.isclose(dg, np.log(_k_ji / _k_ij)), (dg, np.log(_k_ji / _k_ij))
