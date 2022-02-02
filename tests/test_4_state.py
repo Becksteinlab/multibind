@@ -49,3 +49,15 @@ class TestG(object):
         numerators = np.exp(-g_analytic)
         P = numerators / partition_function
         npt.assert_almost_equal(self.c.prob_mle.probability, P)
+
+    def test_covariance_regression(self):
+        """Test on previous results for the covariance matrix."""
+        self.c.build_cycle()
+        self.c.MLE()
+
+        expected = np.array([[0.88016159, 0.51507475, -0.74761414, -0.6476222],
+                             [0.51507475, 0.67087614, -0.6476222, -0.53832869],
+                             [-0.74761414, -0.6476222, 0.88016159, 0.51507475],
+                             [-0.6476222, -0.53832869, 0.51507475, 0.67087614]])
+
+        npt.assert_almost_equal(self.c.covariance_matrix, expected, decimal=8)

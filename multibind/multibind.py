@@ -303,7 +303,10 @@ class Multibind(object):
                 A[i, j] += -1 / varij
                 A[j, i] += -1 / varij
 
+            # since A is the Fisher information matrix, it's inverse is the covariance matrix of the
+            # state free energies
             A_inv = pinv(A, hermitian=True)
+            self.covariance_matrix = A_inv
             self.MLE_res = A_inv @ B
         else:
             from scipy.optimize import root
