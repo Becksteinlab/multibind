@@ -69,8 +69,12 @@ class MultibindScanner(object):
         self._validate_ranges(concentrations)
 
         N_states = len(self.c.states)
+        # shape of [N_states, <values ligand 1>, <values ligand 2>, ..., <values ligand N>]
         res = np.zeros([N_states] + [len(i) for i in values])
         res_prob = np.zeros_like(res)
+        res_covar = np.zeros([N_states, N_states] + [len(i) for i in values])
+        res_deltas = np.zeros_like(res_covar)
+        res_dGs = np.zeros_like(res_covar)
 
         pH = 0
 
@@ -91,14 +95,20 @@ class MultibindScanner(object):
             self.c.concentrations = conc
             self.c.build_cycle(pH=pH)
             self.c.MLE(svd=svd)
-            _filter = (slice(0, None), *c)
-            res[_filter] = self.c.g_mle
-            weights = np.exp(-res[_filter])
+            _filter1D = (slice(0, None), *c)
+            _filter2D = (slice(0, None), slice(0, None), *c)
+            res[_filter1D] = self.c.g_mle
+            weights = np.exp(-res[_filter1D])
             Z = weights.sum()
-            res_prob[_filter] = weights / Z
+            res_prob[_filter1D] = weights / Z
+            res_covar[_filter2D] = self.c.covariance_matrix
+            res_deltas[_filter2D] = self.c.deltas
+            res_dGs[_filter2D] = self.c.dGs
 
         coords = OrderedDict()
         coords['state'] = self.c.states.values[:, 0]
+        coords['state_i'] = self.c.states.values[:, 0]
+        coords['state_j'] = self.c.states.values[:, 0]
 
         for k, v in zip(names, values):
             coords[k] = v
@@ -110,6 +120,15 @@ class MultibindScanner(object):
                 ),
                 microstate_probs=(
                     ['state', *names], res_prob
+                ),
+                covariance=(
+                    ['state_i', 'state_j', *names], res_covar
+                ),
+                deltas=(
+                    ['state_i', 'state_j', *names], res_deltas
+                ),
+                dGs=(
+                    ['state_i', 'state_j', *names], res_dGs
                 ),
             ),
             coords=coords,
@@ -267,10 +286,14 @@ class Multibind(object):
                 for m in range(N):  # derivative with g_m
                     for k in self.graph.index:  # sum over ij
                         state1, state2, value, variance, ligand, standard_state = self.graph.iloc[k]
+
+                        edge_attr = self.cycle.edges()[(state1, state2)]
+                        varij = edge_attr['weight']  # measured variance
+
                         i = self.states[self.states.name == state1].index[0]
                         j = self.states[self.states.name == state2].index[0]
                         kdelta_factor = kd(n, j) * kd(m, i) - kd(n, j) * kd(m, j) - kd(n, i) * kd(m, i) + kd(n, i) * kd(m, j)
-                        J[n, m] += 1 / variance * kdelta_factor
+                        J[n, m] -= 1 / varij * kdelta_factor
             return J
 
         # use dijkstra_path to get the initial guess
@@ -310,12 +333,33 @@ class Multibind(object):
             self.MLE_res = A_inv @ B
         else:
             from scipy.optimize import root
+            FI = jacobian(None).T
+            self.covariance_matrix = pinv(FI, hermitian=True)
             self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian).x
+
+        assert np.all(np.diagonal(self.covariance_matrix) >= 0), "State variances should be positive"
 
         self.g_mle = self.MLE_res - self.MLE_res[0]
         self.mle_linear_distortion = self.g_mle - (self.initial_guess - self.initial_guess[0])
         self.prob_mle = pd.DataFrame(np.exp(-self.g_mle) / np.sum(np.exp(-self.g_mle)), columns=["probability"])
         self.prob_mle["name"] = self.states.name
+
+        self.deltas = np.zeros((N, N))
+        self.dGs = np.zeros((N, N))
+
+        for r in self.graph.index:
+            state1, state2, _, _, _, _ = self.graph.iloc[r]
+            i = self.states[self.states.name == state1].index[0]
+            j = self.states[self.states.name == state2].index[0]
+
+            edge_attr = self.cycle.edges()[(state1, state2)]
+            deltaij = edge_attr['energy']  # measured difference
+
+            self.deltas[i, j] = deltaij
+            self.deltas[j, i] = -deltaij
+            self.dGs[i, j] = self.g_mle[j] - self.g_mle[i]
+            self.dGs[j, i] = self.g_mle[i] - self.g_mle[j]
+
         return self.MLE_res
 
     def MLE_dist(self, N_steps=int(1e6), nt=1):

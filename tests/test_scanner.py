@@ -57,6 +57,8 @@ class TestG(object):
     def test_algorithm_equality(self):
         npt.assert_almost_equal(self.scanner_NR.results.free_energy.values,
                                 self.scanner_svd.results.free_energy.values)
+        npt.assert_almost_equal(self.scanner_NR.results.covariance.values,
+                                self.scanner_svd.results.covariance.values)
 
 
 def test_invalid_concentration():

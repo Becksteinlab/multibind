@@ -61,3 +61,15 @@ class TestG(object):
                              [-0.6476222, -0.53832869, 0.51507475, 0.67087614]])
 
         npt.assert_almost_equal(self.c.covariance_matrix, expected, decimal=8)
+
+    def test_equal_covariance(self):
+        self.c.build_cycle()
+        self.c.MLE()
+        SVD_covar = self.c.covariance_matrix[:]
+
+        self.c.build_cycle()
+        self.c.MLE(svd=False)
+        NR_covar = self.c.covariance_matrix[:]
+
+        npt.assert_almost_equal(NR_covar, SVD_covar)
+

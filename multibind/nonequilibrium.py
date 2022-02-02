@@ -90,32 +90,177 @@ def rate_matrix(filename: str):
         c.MLE()
 
         states, connections, g = c.states.name.values, c.graph[['state1', 'state2']].values, c.g_mle
+        standard_errors = np.sqrt(np.diagonal(c.covariance_matrix))
 
         n = states.shape[0]
         _rate_matrix = np.zeros((n, n))
+        _rate_matrix_SE = np.zeros_like(_rate_matrix)
 
         for i, j in connections:
+            # indices of states
             _i = np.argwhere(states == i)[0, 0]
             _j = np.argwhere(states == j)[0, 0]
-            k_ij, var_ij = _rates[(_rates.state1 == i) & (_rates.state2 == j)].values[0, 2:]
-            k_ji, var_ji = _rates[(_rates.state1 == j) & (_rates.state2 == i)].values[0, 2:]
+
+            # input rates and their variances
+            kijb, vij = _rates[(_rates.state1 == i) & (_rates.state2 == j)].values[0, 2:]
+            kjib, vji = _rates[(_rates.state1 == j) & (_rates.state2 == i)].values[0, 2:]
+
+            # standard errors output by multibind
+            si = standard_errors[_i]
+            sj = standard_errors[_j]
+
+            # most functions will take in standard error instead of variance
+            sijb = np.sqrt(vij)
+            sjib = np.sqrt(vji)
+
+            # free energy difference
             dg = g[_j] - g[_i]
-            b_weight = np.exp(-dg)
-            try:
-                s_ijji = var_ij / var_ji
-            except ZeroDivisionError:
-                s_ijji = 1e12
-            try:
-                s_jiij = 1 / s_ijji
-            except ZeroDivisionError:
-                s_jiij = 1e12
 
-            _k_ji = k_ji / (1 + s_jiij * b_weight**2) + k_ij / (s_ijji / b_weight + b_weight)
-            _k_ij = _k_ji * b_weight
+            # standard errors of forward and backward rates
+            skji = kij_standard_error(kijb, kjib, sijb, sjib, dg, sj, si)
+            skij = kij_standard_error(kijb, kjib, sijb, sjib, dg, sj, si)
 
-            assert np.isclose(dg, np.log(_k_ji / _k_ij)), (dg, np.log(_k_ji / _k_ij))
+            # new rates
+            kji, kij = project_rates(kijb, kjib, sijb, sjib, dg)
 
-            _rate_matrix[_i, _j] = _k_ij
-            _rate_matrix[_j, _i] = _k_ji
+            # confirm that we can recreate the target free energy differenc
+            assert np.isclose(dg, np.log(kji / kij)), (dg, np.log(kji / kij))
 
-        return c, _rate_matrix
+            _rate_matrix[_i, _j] = kij
+            _rate_matrix[_j, _i] = kji
+            _rate_matrix_SE[_i, _j] = skij
+            _rate_matrix_SE[_j, _i] = skji
+
+        return c, _rate_matrix, _rate_matrix_SE
+
+
+def project_rates(kijb, kjib, sijb, sjib, dg):
+    """Project input rates and standard errors onto the consistency line.
+
+    Parameters
+    ----------
+    kijb : float
+        Input rate from state i to j
+    kjib : float
+        Input rate from state j to i
+    sijb : float
+        Input standard error the rate from state i to j
+    sjib : float
+        Input standard error the rate from state j to i
+    dg : float
+        Target free energy that defines the consistency line
+
+    Returns
+    -------
+    (kji, kij) : (float, float)
+        The new projected rates
+    """
+    b_weight = np.exp(-dg)
+
+    vij = sijb**2
+    vji = sjib**2
+
+    try:
+        s_ijji = vij / vji
+    except ZeroDivisionError:
+        s_ijji = 1e12
+    try:
+        s_jiij = 1 / s_ijji
+    except ZeroDivisionError:
+        s_jiij = 1e12
+
+    kji = kjib / (1 + s_jiij * b_weight**2) + kijb / (s_ijji / b_weight + b_weight)
+    kij = kji * b_weight
+
+    return (kji, kij)
+
+
+def dG_standard_error(sj, si):
+    """The standard error of the free energy difference between states i and j.
+    Note that this is a symmetric function.
+
+    Parameters
+    ----------
+    sj : float
+        Standard error for the estimate of the free energy of state j
+    si : float
+        Standard error for the estimate of the free energy of state i
+
+    Returns
+    -------
+    sdg : float
+        Standard error of the free energy difference
+    """
+    return np.sqrt(sj**2 + si**2)
+
+
+def kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
+    """The standard error of kji from the projection method.
+
+    Parameters
+    ----------
+    kijb : float
+        Input rate from state i to j
+    kjib : float
+        Input rate from state j to i
+    sijb : float
+        Input standard error for the rate from state i to j
+    sjib : float
+        Input standard error for the rate from state j to i
+    target_dG : float
+        The determined free energy difference that defines the consistency line.
+    sj : float
+        Standard error of the free energy of state j
+    si : float
+        Standard error of the free energy of state i
+
+    Returns
+    -------
+    sji : float
+        Standard error of the projected kji rate
+    """
+    vji = sjib**2
+    vij = sijb**2
+    b_weight = np.exp(-target_dG)
+
+    skji = np.sqrt(2 * vji**2 / b_weight**2
+                   * (-kijb * vij / b_weight**2 + 2 * kjib * vij / b_weight + kijb * vji)**2
+                   / (vij / b_weight**2 + vji)**4)
+    return skji
+
+
+def kij_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
+    """The standard error of kij from the projection method.
+
+    Parameters
+    ----------
+    kijb : float
+        Input rate from state i to j
+    kjib : float
+        Input rate from state j to i
+    sijb : float
+        Input standard error for the rate from state i to j
+    sjib : float
+        Input standard error for the rate from state j to i
+    target_dG : float
+        The determined free energy difference that defines the consistency line.
+    sj : float
+        Standard error of the free energy of state j
+    si : float
+        Standard error of the free energy of state i
+
+    Returns
+    -------
+    sij : float
+        Standard error of the projected kij rate
+    """
+    sdg = dG_standard_error(sj, si)
+    b_weight = np.exp(-target_dG)
+
+    skji = kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si)
+
+    _k_ji, _k_ij = project_rates(kijb, kjib, sijb, sjib, target_dG)
+
+    skij = np.sqrt(sdg**2 * (-_k_ji * b_weight)**2
+                   + skji**2 * b_weight**2)
+    return skij
