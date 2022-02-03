@@ -1,5 +1,5 @@
 from multibind.nonequilibrium import rate_matrix
-from multibind.nonequilibrium import project_rates, dG_standard_error, kij_standard_error, kji_standard_error
+from multibind.nonequilibrium import project_rates, kij_standard_error, kji_standard_error
 import numpy as np
 import pytest
 from math import isclose
@@ -7,6 +7,7 @@ from math import isclose
 
 class TestThermoRates(object):
 
+    @pytest.mark.filterwarnings("ignore")
     def test_matrix_regression(self):
         """Are results equal to the previous 'correct' results?"""
         c, matrix, SE = rate_matrix("../examples/rates/inputs/inputs/rates.csv")

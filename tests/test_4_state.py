@@ -1,14 +1,17 @@
 import numpy.testing as npt
 import multibind as mb
 import numpy as np
-
+import pandas as pd
+from multibind.chem import protonation_free_energy
 
 class TestG(object):
 
     def setup(self):
         self.c = mb.Multibind()
-        self.c.read_graph("../examples/input/4-state-diamond/graph.csv", comment="#")
-        self.c.read_states("../examples/input/4-state-diamond/states.csv")
+        self.statefile = "../examples/input/4-state-diamond/states.csv"
+        self.graphfile = "../examples/input/4-state-diamond/graph.csv"
+        self.c.read_graph(self.graphfile, comment="#")
+        self.c.read_states(self.statefile)
 
     def test_length(self):
         """Does the algorithm give us the right number of results..."""
@@ -73,3 +76,24 @@ class TestG(object):
 
         npt.assert_almost_equal(NR_covar, SVD_covar)
 
+    def test_deltas(self):
+        self.c.build_cycle(pH=0)
+        self.c.MLE()
+
+        states = pd.read_csv(self.statefile, comment='#')
+        states['name'] = states['name'].astype('str')
+
+        graph = pd.read_csv(self.graphfile, comment='#')
+        graph['state1'] = graph['state1'].astype('str')
+        graph['state2'] = graph['state2'].astype('str')
+
+        state_indices = {j: i for i, j in enumerate(list(states['name'].values))}
+
+        deltas = self.c.deltas
+
+        for entry in range(graph.shape[0]):
+            s1, s2, val, var, lig, std = graph.loc[entry]
+            i1 = state_indices[s1]
+            i2 = state_indices[s2]
+
+            assert deltas[i1, i2] == protonation_free_energy(val, pH=0)

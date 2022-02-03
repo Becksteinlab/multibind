@@ -7,6 +7,7 @@ from tqdm import tqdm
 from xarray import Dataset
 from itertools import product
 from collections import OrderedDict
+from multibind.chem import protonation_free_energy, protonation_free_energy_standard_error, binding_free_energy_general
 
 
 class InvalidConcentrationError(Exception):
@@ -221,15 +222,15 @@ class Multibind(object):
 
             # if we have protons, it must be a pKa
             if ligand.lower() == "h+":
-                energy = np.log(10) * (pH - value)
-                var = np.log(10) ** 2 * variance
+                energy = protonation_free_energy(value, pH=pH)
+                var = protonation_free_energy_standard_error(np.sqrt(variance))**2
             # using a direct helmholtz free energy
             elif ligand == "helm":
                 energy = value
                 var = variance
             # dealing with binding energies
             else:
-                energy = value - np.log(self.concentrations[ligand] / standard_state)
+                energy = binding_free_energy_general(value, concentration=self.concentrations[ligand])
                 var = variance  # already in kT!
             # add a forward and direction energy
 
