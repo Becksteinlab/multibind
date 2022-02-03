@@ -348,6 +348,8 @@ class Multibind(object):
         self.deltas = np.zeros((N, N))
         self.dGs = np.zeros((N, N))
 
+        self.deltas[:] = np.nan
+
         for r in self.graph.index:
             state1, state2, _, _, _, _ = self.graph.iloc[r]
             i = self.states[self.states.name == state1].index[0]
@@ -358,8 +360,10 @@ class Multibind(object):
 
             self.deltas[i, j] = deltaij
             self.deltas[j, i] = -deltaij
-            self.dGs[i, j] = self.g_mle[j] - self.g_mle[i]
-            self.dGs[j, i] = self.g_mle[i] - self.g_mle[j]
+
+        for _i, dGi in enumerate(self.g_mle):
+            for _j, dGj in enumerate(self.g_mle):
+                self.dGs[_i, _j] = self.g_mle[_j] - self.g_mle[_i]
 
         return self.MLE_res
 
