@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 from numpy.linalg import pinv
 import networkx as nx
-from random import randint
-from tqdm import tqdm
 from xarray import Dataset
 from itertools import product
 from collections import OrderedDict
@@ -15,13 +13,25 @@ class InvalidConcentrationError(Exception):
 
 
 class MultibindScanner(object):
+    """Run multibind across a range of concentrations.
 
-    """Run multibind across a range of concentrations."""
+    Attributes
+    ----------
+    results.deltas : xr.DataArray
+        DataArray containing the input free energy differences across multiple ligand concentrations.
+        See docstring for `Multibind` for more info.
+    results.covariance : xr.DataArray
+        DataArray containing the covariance between calculated state free energies across multiple ligand
+        concentrations. See docstring for `Multibind` for more info.
+    results.std_errors : xr.DataArray
+        DataArray containing the standard error for each state free energy across multiple ligand concentrations.
+        See docstring for `Multibind` for more info.
+    """
 
-    def __init__(self, statefile, graphfile, comment_char='#'):
+    def __init__(self, statefile: str, graphfile: str, comment_char: str = '#'):
         self.c = Multibind(states_filename=statefile, graph_filename=graphfile, comment_char=comment_char)
 
-    def run(self, concentrations: dict, svd=True):
+    def run(self, concentrations: dict, svd: bool = True) -> None:
         """Create an xarray dataset containing thermodynamic properties as a
         function of varying concentrations.
 
@@ -73,6 +83,7 @@ class MultibindScanner(object):
         # shape of [N_states, <values ligand 1>, <values ligand 2>, ..., <values ligand N>]
         res = np.zeros([N_states] + [len(i) for i in values])
         res_prob = np.zeros_like(res)
+        res_std_error = np.zeros_like(res)
         res_covar = np.zeros([N_states, N_states] + [len(i) for i in values])
         res_deltas = np.zeros_like(res_covar)
         res_dGs = np.zeros_like(res_covar)
@@ -102,6 +113,7 @@ class MultibindScanner(object):
             weights = np.exp(-res[_filter1D])
             Z = weights.sum()
             res_prob[_filter1D] = weights / Z
+            res_std_error[_filter1D] = self.c.std_errors
             res_covar[_filter2D] = self.c.covariance_matrix
             res_deltas[_filter2D] = self.c.deltas
             res_dGs[_filter2D] = self.c.dGs
@@ -122,6 +134,9 @@ class MultibindScanner(object):
                 microstate_probs=(
                     ['state', *names], res_prob
                 ),
+                std_errors=(
+                    ['state', *names], res_std_error
+                ),
                 covariance=(
                     ['state_i', 'state_j', *names], res_covar
                 ),
@@ -135,13 +150,16 @@ class MultibindScanner(object):
             coords=coords,
         )
 
-    def effective_energy_difference(self, category, state1, state2, **kwargs):
+    def effective_energy_difference(self, category: str, state1: str, state2: str, **kwargs) -> float:
         self.c.g_mle = self.results.free_energy.sel(**kwargs).values
         return self.c.effective_energy_difference(category, state1, state2)
 
-    def _validate_ranges(self, concentrations):
+    def _validate_ranges(self, concentrations: dict):
         """Used to check the provided concentrations before executing the `run` method.
 
+        Raises
+        ------
+        InvalidConcentrationError
         """
 
         for k, v in concentrations.items():
@@ -154,8 +172,25 @@ class MultibindScanner(object):
 
 
 class Multibind(object):
+    """Core multibind object that constructs the potential graph and solves for thermodynamically
+    consistent state free energies.
 
-    def __init__(self, states_filename=None, graph_filename=None, comment_char='#'):
+    Attributes
+    ----------
+    deltas : ndarray
+        NxN numpy array with index i and j corresponding to the input free energy difference
+        between states i and j. `np.nan` indicates an edge the was not defined by the user.
+        This attribute becomes available after running the `MLE` method.
+    covariance_matrix : ndarray
+        NxN numpy array with index i and j corresponding to the covariance between the calculated
+        state free energies. This attribute becomes available after running the `MLE` method.
+    std_errors : ndarray
+        1D numpy array where index i is the standard error of the calculated state free energies.
+        This attribute becomes avaulable after running the `MLE` method.
+
+    """
+
+    def __init__(self, states_filename: str = None, graph_filename: str = None, comment_char: str = '#'):
         """
         Parameters
         ----------
@@ -163,6 +198,9 @@ class Multibind(object):
             Path the CSV containing the states of the graph.
         graph_filename : str (optional)
             Path to the CSV containing the graph data for the network.
+        comment_char : str, optional
+            If there are comments in either files, you can specify the character. Defaults to '#'.
+
         """
         if states_filename:
             self.read_states(states_filename, comment=comment_char)
@@ -177,7 +215,7 @@ class Multibind(object):
         self.cycle = None
         self.concentrations = {}
 
-    def build_cycle(self, pH=5):
+    def build_cycle(self, pH: float = 5) -> None:
         """Constructs the cycle used for calculation
 
         Parameters
@@ -239,13 +277,72 @@ class Multibind(object):
 
         self.cycle = G
 
-    def MLE(self, svd=True):
+    def MLE(self, svd: bool = True):
         """Performs a maximum likelihood estimation on the current graph"""
 
         N = len(self.states.name)
 
-        def kd(i, j):
-            return int(i == j)
+        if svd:
+            self._MLE_SVD(N)
+        else:
+            self._MLE_NR(N)
+
+
+        self.std_errors = np.sqrt(np.diagonal(self.covariance_matrix))
+        assert np.all(self.std_errors >= 0), "Standard errors for state free energies should be positive"
+
+        self.g_mle = self.MLE_res - self.MLE_res[0]
+        self.prob_mle = pd.DataFrame(np.exp(-self.g_mle) / np.sum(np.exp(-self.g_mle)), columns=["probability"])
+        self.prob_mle["name"] = self.states.name
+
+        self.deltas = np.zeros((N, N))
+        self.dGs = np.zeros((N, N))
+
+        self.deltas[:] = np.nan
+
+        for r in self.graph.index:
+            state1, state2, _, _, _, _ = self.graph.iloc[r]
+            i = self.states[self.states.name == state1].index[0]
+            j = self.states[self.states.name == state2].index[0]
+
+            edge_attr = self.cycle.edges()[(state1, state2)]
+            deltaij = edge_attr['energy']  # measured difference
+
+            self.deltas[i, j] = deltaij
+            self.deltas[j, i] = -deltaij
+
+        for _i, dGi in enumerate(self.g_mle):
+            for _j, dGj in enumerate(self.g_mle):
+                self.dGs[_i, _j] = self.g_mle[_j] - self.g_mle[_i]
+
+    def _MLE_SVD(self, N):
+        B = np.zeros((N))
+        A = np.zeros((N, N))
+
+        for r in self.graph.index:
+            state1, state2, _, _, _, _ = self.graph.iloc[r]
+            i = self.states[self.states.name == state1].index[0]
+            j = self.states[self.states.name == state2].index[0]
+
+            edge_attr = self.cycle.edges()[(state1, state2)]
+            deltaij = edge_attr['energy']  # measured difference
+            varij = edge_attr['weight']  # measured variance
+
+            B[i] += -deltaij / varij
+            B[j] += deltaij / varij
+
+            A[i, i] += 1 / varij
+            A[j, j] += 1 / varij
+            A[i, j] += -1 / varij
+            A[j, i] += -1 / varij
+
+        # since A is the Fisher information matrix, it's inverse is the covariance matrix of the
+        # state free energies
+        A_inv = pinv(A, hermitian=True)
+        self.covariance_matrix = A_inv
+        self.MLE_res = A_inv @ B
+
+    def _MLE_NR(self, N):
 
         def grad_log_likelihood(g_t):
             """Returns the gradient of the log likelihood function.
@@ -280,6 +377,9 @@ class Multibind(object):
 
             return state_vector
 
+        def kd(i, j):
+            return int(i == j)
+
         def jacobian(g_t):
             # g_t here is not used deliberately as it is actually not needed except to avoid throwing an error
             J = np.zeros((N, N))
@@ -296,6 +396,7 @@ class Multibind(object):
                         kdelta_factor = kd(n, j) * kd(m, i) - kd(n, j) * kd(m, j) - kd(n, i) * kd(m, i) + kd(n, i) * kd(m, j)
                         J[n, m] -= 1 / varij * kdelta_factor
             return J
+        from scipy.optimize import root
 
         # use dijkstra_path to get the initial guess
         self.initial_guess = np.zeros(N)
@@ -306,143 +407,11 @@ class Multibind(object):
             linked = [(path[j], path[j + 1]) for j, _ in enumerate(path[:-1])]
             self.initial_guess[i] = sum([edge_energies[x] for x in linked])
 
-        if svd:
-            B = np.zeros((N))
-            A = np.zeros((N, N))
+        FI = jacobian(None).T
+        self.covariance_matrix = pinv(FI, hermitian=True)
+        self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian).x
 
-            for r in self.graph.index:
-                state1, state2, _, _, _, _ = self.graph.iloc[r]
-                i = self.states[self.states.name == state1].index[0]
-                j = self.states[self.states.name == state2].index[0]
-
-                edge_attr = self.cycle.edges()[(state1, state2)]
-                deltaij = edge_attr['energy']  # measured difference
-                varij = edge_attr['weight']  # measured variance
-
-                B[i] += -deltaij / varij
-                B[j] += deltaij / varij
-
-                A[i, i] += 1 / varij
-                A[j, j] += 1 / varij
-                A[i, j] += -1 / varij
-                A[j, i] += -1 / varij
-
-            # since A is the Fisher information matrix, it's inverse is the covariance matrix of the
-            # state free energies
-            A_inv = pinv(A, hermitian=True)
-            self.covariance_matrix = A_inv
-            self.MLE_res = A_inv @ B
-        else:
-            from scipy.optimize import root
-            FI = jacobian(None).T
-            self.covariance_matrix = pinv(FI, hermitian=True)
-            self.MLE_res = root(grad_log_likelihood, self.initial_guess, jac=jacobian).x
-
-        assert np.all(np.diagonal(self.covariance_matrix) >= 0), "State variances should be positive"
-
-        self.g_mle = self.MLE_res - self.MLE_res[0]
-        self.mle_linear_distortion = self.g_mle - (self.initial_guess - self.initial_guess[0])
-        self.prob_mle = pd.DataFrame(np.exp(-self.g_mle) / np.sum(np.exp(-self.g_mle)), columns=["probability"])
-        self.prob_mle["name"] = self.states.name
-
-        self.deltas = np.zeros((N, N))
-        self.dGs = np.zeros((N, N))
-
-        self.deltas[:] = np.nan
-
-        for r in self.graph.index:
-            state1, state2, _, _, _, _ = self.graph.iloc[r]
-            i = self.states[self.states.name == state1].index[0]
-            j = self.states[self.states.name == state2].index[0]
-
-            edge_attr = self.cycle.edges()[(state1, state2)]
-            deltaij = edge_attr['energy']  # measured difference
-
-            self.deltas[i, j] = deltaij
-            self.deltas[j, i] = -deltaij
-
-        for _i, dGi in enumerate(self.g_mle):
-            for _j, dGj in enumerate(self.g_mle):
-                self.dGs[_i, _j] = self.g_mle[_j] - self.g_mle[_i]
-
-        return self.MLE_res
-
-    def MLE_dist(self, N_steps=int(1e6), nt=1):
-        """Run Monte-Carlo steps to assess quality of MLE results.
-
-        Parameters
-        ----------
-        N_steps : int
-            The number of Monte-Carlo steps to perform.
-
-        Returns
-        -------
-        ndarray with the distribution of free energy values for the states.
-
-        """
-
-        def potential(g_t):
-            potential = 0
-            # factor that will be added to one node and subtracted from another
-            # indices of state vector
-            # Iterate over all connections
-            for r in self.graph.index:
-                state1, state2, value, variance, ligand, standard_state = self.graph.iloc[r]
-                i = self.states[self.states.name == state1].index[0]
-                j = self.states[self.states.name == state2].index[0]
-
-                gj = g_t[j]
-                gi = g_t[i]
-
-                edge_attr = self.cycle.edges()[(state1, state2)]
-                deltaij = edge_attr['energy']  # measured difference
-                varij = edge_attr['weight']  # measured variance
-
-                potential += - 1 / (2 * varij) * ((gj - gi) - deltaij) ** 2
-
-            return potential
-
-        def accept(ns, cs):
-            potential_ns = potential(ns)
-            potential_cs = potential(cs)
-
-            diff = potential_cs - potential_ns
-            prob = min([1, np.exp(-50 * diff)])
-            return np.random.random_sample() <= prob
-
-        def compute(self, N_steps=N_steps):
-            current_state = self.g_mle.copy()
-            new_state = current_state.copy()
-            step = 1
-            accepted = 0
-            rejected = 0
-            Nstates = len(new_state)
-            dist = np.zeros((N_steps - 1, Nstates))
-            pbar = tqdm(total=N_steps, position=0)
-            while step < N_steps:
-                # select random state to mutate
-                state = randint(0, Nstates - 1)
-                # mutate state
-                disp = np.random.normal(0, 0.01)
-                new_state[state] = new_state[state] + disp
-                # accept/reject change
-                if accept(new_state, current_state):
-                    current_state = new_state.copy()
-                    dist[step - 1] = current_state[:]
-                    pbar.update(1)
-                    step += 1
-                    accepted += 1
-                else:
-                    new_state = current_state.copy()
-                    rejected += 1
-            pbar.close()
-            print("Accepted: ", accepted)
-            print("Rejected: ", rejected)
-            return dist
-
-        return compute(self)
-
-    def effective_energy_difference(self, macrostate_class, state1, state2):
+    def effective_energy_difference(self, macrostate_class: str, state1: str, state2: str) -> float:
         """Calculate the effective binding energy between two states.
 
         Parameters
