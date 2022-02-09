@@ -26,13 +26,19 @@ class TestThermoRates(object):
 
 
 @pytest.mark.parametrize("kjib,kijb,sjib,sijb,target_dG,sj,si,kji,kij,sji,sij",
-                         [(70, 40, np.sqrt(20), np.sqrt(20), -1, 1, 1, 21.30529001482594, 57.91378269735128, 34.74749438345482, 125.0178900064783)])
+                         [(70, 40, np.sqrt(20), np.sqrt(20), -1, 1, 1, 21.30529001482594, 57.91378269735128, 34.74749438345482, 125.0178900064783),
+                          (173.06000000, 7000.00000000, 10.00000000, 70.71000000, -3.55000000, 0.05030344, 0.02511696, 199.96262447, 6961.36233140, 10.73760592, 541.23325915),
+                          (114.51000000, 2300.00000000, 22.36000000, 31.62000000, -1.33000000, 0.03988453, 0.05030344, 547.70256004, 2070.88714299, 27.43328993, 168.62175184),
+                          (9562.58, 5800, 54.77, 31.62, 0.5, 0.03988452590655562, 0.03946882571557041, 9562.581768123830, 5799.999028376148, 281.5180681407045, 367.5227630083491),
+                          (197.84000000, 120.00000000, 10.00000000, 3.57000000, 0.65000000, 0.02505446, 0.03946883, 219.66055596, 114.67286556, 6.67187784, 6.39301847),
+                          (7359.76000000, 300.00000000, 31.62000000, 7.07000000, 3.23000000, 0.02477145, 0.02505446, 7366.56254336, 291.40278888, 7.64476117, 10.27138954)]
+                         )
 def test_projection(kjib, kijb, sjib, sijb, target_dG, sj, si, kji, kij, sji, sij):
     _k_ji, _k_ij = project_rates(kijb, kjib, sijb, sjib, target_dG)
     _sji = kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si)
     _sij = kij_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si)
 
-    assert isclose(_k_ji, kji)
-    assert isclose(_k_ij, kij)
-    assert isclose(_sji, sji)
-    assert isclose(_sij, sij)
+    assert isclose(_k_ji, kji, rel_tol=1e-5)
+    assert isclose(_k_ij, kij, rel_tol=1e-5)
+    assert isclose(_sji, sji, rel_tol=1e-5)
+    assert isclose(_sij, sij, rel_tol=1e-5)

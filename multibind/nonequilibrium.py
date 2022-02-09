@@ -233,10 +233,10 @@ def kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
     vji = sjib**2
     vij = sijb**2
     b_weight = np.exp(-target_dG)
+    sdg = np.sqrt(sj**2 + si**2)
 
-    skji = np.sqrt(2 * vji**2 / b_weight**2
-                   * (-kijb * vij / b_weight**2 + 2 * kjib * vij / b_weight + kijb * vji)**2
-                   / (vij / b_weight**2 + vji)**4)
+    skji = np.sqrt((b_weight**-2 * vji**2 * sdg**2 * (-b_weight**-2 * kijb * vij + 2 * b_weight**-1 * kjib * vij + kijb * vji)**2) / (b_weight**-2 * vij + vji)**4)
+
     return skji
 
 
