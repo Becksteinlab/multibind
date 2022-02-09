@@ -287,7 +287,6 @@ class Multibind(object):
         else:
             self._MLE_NR(N)
 
-
         self.std_errors = np.sqrt(np.diagonal(self.covariance_matrix))
         assert np.all(self.std_errors >= 0), "Standard errors for state free energies should be positive"
 

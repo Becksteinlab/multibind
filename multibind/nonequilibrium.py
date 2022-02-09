@@ -3,6 +3,7 @@ import pandas as pd
 import tempfile
 import os
 import numpy as np
+from math import isclose
 
 
 def rate_matrix(filename: str):
@@ -117,7 +118,7 @@ def rate_matrix(filename: str):
             dg = g[_j] - g[_i]
 
             # standard errors of forward and backward rates
-            skji = kij_standard_error(kijb, kjib, sijb, sjib, dg, sj, si)
+            skji = kji_standard_error(kijb, kjib, sijb, sjib, dg, sj, si)
             skij = kij_standard_error(kijb, kjib, sijb, sjib, dg, sj, si)
 
             # new rates
@@ -134,7 +135,7 @@ def rate_matrix(filename: str):
         return c, _rate_matrix, _rate_matrix_SE
 
 
-def project_rates(kijb, kjib, sijb, sjib, dg):
+def project_rates(kijb, kjib, sijb, sjib, dg, infinity=1e12):
     """Project input rates and standard errors onto the consistency line.
 
     Parameters
@@ -149,6 +150,8 @@ def project_rates(kijb, kjib, sijb, sjib, dg):
         Input standard error the rate from state j to i
     dg : float
         Target free energy that defines the consistency line
+    infinity: float, optional
+        Value to be used for s_ijji or s_jiij if any input variances are zero
 
     Returns
     -------
@@ -160,14 +163,22 @@ def project_rates(kijb, kjib, sijb, sjib, dg):
     vij = sijb**2
     vji = sjib**2
 
-    try:
-        s_ijji = vij / vji
-    except ZeroDivisionError:
-        s_ijji = 1e12
-    try:
-        s_jiij = 1 / s_ijji
-    except ZeroDivisionError:
-        s_jiij = 1e12
+    vij_is_zero = isclose(0, vij)
+    vji_is_zero = isclose(0, vji)
+
+    if vji_is_zero and vij_is_zero:
+        s_ijji = 1
+        s_jiij = 1
+    else:
+        if vji_is_zero:
+            s_ijji = infinity
+            s_jiij = 0
+        elif vij_is_zero:
+            s_jiij = infinity
+            s_ijji = 0
+        else:
+            s_ijji = vij / vji
+            s_jiij = 1 / s_ijji
 
     kji = kjib / (1 + s_jiij * b_weight**2) + kijb / (s_ijji / b_weight + b_weight)
     kij = kji * b_weight
