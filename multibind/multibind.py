@@ -424,7 +424,7 @@ class Multibind(object):
 
         Returns
         -------
-        float : macroscopic free energy difference in kT
+        (float, float) : macroscopic free energy difference in kT and its associated error
         """
 
         macrostate_class = str(macrostate_class)
@@ -432,10 +432,19 @@ class Multibind(object):
         microstates_1_indices = self.states[self.states[macrostate_class] == state1].index
         microstates_2_indices = self.states[self.states[macrostate_class] == state2].index
 
-        energies_1 = np.array([self.g_mle[i] for i in microstates_1_indices])
-        energies_2 = np.array([self.g_mle[i] for i in microstates_2_indices])
+        energies_1 = self.g_mle[microstates_1_indices]
+        energies_2 = self.g_mle[microstates_2_indices]
 
-        return np.log(np.sum(np.exp(-energies_1)) / np.sum(np.exp(-energies_2)))
+        std_err_1 = self.std_errors[microstates_1_indices]
+        std_err_2 = self.std_errors[microstates_2_indices]
+
+        z1 = np.exp(-energies_1)
+        z2 = np.exp(-energies_2)
+
+        std_err = np.sqrt((std_err_1**2 * z1**2).sum() / z1.sum()**2 + (std_err_2**2 * z2**2).sum() / z2.sum()**2)
+        diff = np.log(np.sum(z1) / np.sum(z2))
+
+        return diff, std_err
 
     def _parse(self, filename, comment=None):
         """Helper function to quickly parse CSV into a DataFrame"""
