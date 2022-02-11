@@ -154,7 +154,7 @@ class MultibindScanner(object):
         self.c.g_mle = self.results.free_energy.sel(**kwargs).values
         return self.c.effective_energy_difference(category, state1, state2)
 
-    def _validate_ranges(self, concentrations: dict):
+    def _validate_ranges(self, concentrations: dict) -> None:
         """Used to check the provided concentrations before executing the `run` method.
 
         Raises
@@ -230,7 +230,7 @@ class Multibind(object):
 
         # Determine if we have enough information to continue,
         # i.e. states information and graph information
-        if type(self.states) is None or type(self.graph) is None:
+        if self.states is None or self.graph is None:
             msg = "Need to specify both the state and graph \
             information. Try using `read_states` and `read_graph`."
             raise RuntimeError(msg)
@@ -277,7 +277,7 @@ class Multibind(object):
 
         self.cycle = G
 
-    def MLE(self, svd: bool = True):
+    def MLE(self, svd: bool = True) -> None:
         """Performs a maximum likelihood estimation on the current graph"""
 
         N = len(self.states.name)
@@ -314,7 +314,7 @@ class Multibind(object):
             for _j, dGj in enumerate(self.g_mle):
                 self.dGs[_i, _j] = self.g_mle[_j] - self.g_mle[_i]
 
-    def _MLE_SVD(self, N):
+    def _MLE_SVD(self, N: int) -> None:
         B = np.zeros((N))
         A = np.zeros((N, N))
 
@@ -341,7 +341,7 @@ class Multibind(object):
         self.covariance_matrix = A_inv
         self.MLE_res = A_inv @ B
 
-    def _MLE_NR(self, N):
+    def _MLE_NR(self, N: int) -> None:
 
         def grad_log_likelihood(g_t):
             """Returns the gradient of the log likelihood function.
@@ -446,7 +446,7 @@ class Multibind(object):
 
         return diff, std_err
 
-    def _parse(self, filename, comment=None):
+    def _parse(self, filename: str, comment: str = None) -> pd.DataFrame:
         """Helper function to quickly parse CSV into a DataFrame"""
         try:
             return pd.read_csv(filename, comment=comment)
@@ -457,7 +457,7 @@ class Multibind(object):
             print(f'Could not parse file {filename}')
             raise e
 
-    def read_states(self, filename, comment=None):
+    def read_states(self, filename: str, comment: str = None) -> pd.DataFrame:
         """Read in state information from a state CSV file.
 
         Parameters
@@ -472,7 +472,7 @@ class Multibind(object):
         self.states = self._parse(filename, comment=comment)
         self.states['name'] = self.states['name'].astype('str')
 
-    def read_graph(self, filename, comment=None):
+    def read_graph(self, filename: str, comment: str = None):
         """Read in the graph information from a graph CSV file.
 
         Parameters

@@ -6,7 +6,7 @@ import numpy as np
 from math import isclose
 
 
-def rate_matrix(filename: str):
+def rate_matrix(filename: str) -> (Multibind, np.ndarray, np.ndarray):
     """Build a rate matrix from a connectivity file with rates.
 
     The rates are converted into free energy differences between states and
@@ -24,6 +24,8 @@ def rate_matrix(filename: str):
         Multibind graph with the appropriate states and connections filled in from the input rate file
     rate_matrix : 2D array
         2D array showing the rate of going from the state in index 0 to the state in index 1.
+    rate_std_err_matrix : 2D array
+        2D array with the standard error on the projected rates.
     """
 
     _rates = pd.read_csv(filename, header=0)
@@ -114,6 +116,8 @@ def rate_matrix(filename: str):
             sijb = np.sqrt(vij)
             sjib = np.sqrt(vji)
 
+            sijb, sjib = clean_sigmas(sijb, sjib)
+
             # free energy difference
             dg = g[_j] - g[_i]
 
@@ -135,7 +139,29 @@ def rate_matrix(filename: str):
         return c, _rate_matrix, _rate_matrix_SE
 
 
-def project_rates(kijb, kjib, sijb, sjib, dg, infinity=1e12):
+def clean_sigmas(r1: float, r2: float) -> (float, float):
+    """If sigmas are zero, it's best to just make them close to zero to avoid errors.
+
+    Parameters
+    ----------
+    r1 : float
+        First rate
+    r2 : float
+        Second rate
+
+    Returns
+    -------
+    (float, float)
+        The potentially transformed rates
+    """
+    if isclose(r1, 0):
+        r1 = 1e-12
+    if isclose(r2, 0):
+        r2 = 1e-12
+    return r1, r2
+
+
+def project_rates(kijb: float, kjib: float, sijb: float, sjib: float, dg: float, infinity: float = 1e12) -> (float, float):
     """Project input rates and standard errors onto the consistency line.
 
     Parameters
@@ -163,22 +189,8 @@ def project_rates(kijb, kjib, sijb, sjib, dg, infinity=1e12):
     vij = sijb**2
     vji = sjib**2
 
-    vij_is_zero = isclose(0, vij)
-    vji_is_zero = isclose(0, vji)
-
-    if vji_is_zero and vij_is_zero:
-        s_ijji = 1
-        s_jiij = 1
-    else:
-        if vji_is_zero:
-            s_ijji = infinity
-            s_jiij = 0
-        elif vij_is_zero:
-            s_jiij = infinity
-            s_ijji = 0
-        else:
-            s_ijji = vij / vji
-            s_jiij = 1 / s_ijji
+    s_ijji = vij / vji
+    s_jiij = 1 / s_ijji
 
     kji = kjib / (1 + s_jiij * b_weight**2) + kijb / (s_ijji / b_weight + b_weight)
     kij = kji * b_weight
@@ -186,7 +198,7 @@ def project_rates(kijb, kjib, sijb, sjib, dg, infinity=1e12):
     return (kji, kij)
 
 
-def dG_standard_error(sj, si):
+def dG_standard_error(sj: float, si: float) -> float:
     """The standard error of the free energy difference between states i and j.
     Note that this is a symmetric function.
 
@@ -205,7 +217,7 @@ def dG_standard_error(sj, si):
     return np.sqrt(sj**2 + si**2)
 
 
-def kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
+def kji_standard_error(kijb: float, kjib: float, sijb: float, sjib: float, target_dG: float, sj: float, si: float) -> float:
     """The standard error of kji from the projection method.
 
     Parameters
@@ -240,7 +252,7 @@ def kji_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
     return skji
 
 
-def kij_standard_error(kijb, kjib, sijb, sjib, target_dG, sj, si):
+def kij_standard_error(kijb: float, kjib: float, sijb: float, sjib: float, target_dG: float, sj: float, si: float) -> float:
     """The standard error of kij from the projection method.
 
     Parameters

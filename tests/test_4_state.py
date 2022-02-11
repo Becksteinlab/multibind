@@ -1,8 +1,9 @@
-import numpy.testing as npt
+from multibind.chem import protonation_free_energy
 import multibind as mb
 import numpy as np
+import numpy.testing as npt
 import pandas as pd
-from multibind.chem import protonation_free_energy
+
 
 class TestG(object):
 

@@ -1,7 +1,8 @@
-import numpy.testing as npt
+from math import isclose
 import multibind as mb
 import numpy as np
-from math import isclose
+import numpy.testing as npt
+
 
 class TestG(object):
 
@@ -16,6 +17,14 @@ class TestG(object):
         self.c.build_cycle()
         self.c.MLE()
         assert len(self.c.g_mle) == 4
+
+    def test_missing_sodium_concentration(self):
+        try:
+            self.c.concentrations = {}
+            self.c.build_cycle()
+            assert False, "Cycle build should fail if not provided a necessary concentration"
+        except RuntimeError:
+            pass
 
     def test_pH_7(self):
         self.c.build_cycle(pH=7)
