@@ -19,4 +19,4 @@ build:
 python:
   install:
     - method: pip
-      path: multibind
+      path: .
