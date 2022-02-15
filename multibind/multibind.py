@@ -9,6 +9,8 @@ from multibind.chem import protonation_free_energy, protonation_free_energy_stan
 
 
 class InvalidConcentrationError(Exception):
+    """Indicates that an invalid concentration was found.
+    """
     pass
 
 
