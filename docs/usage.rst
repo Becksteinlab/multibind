@@ -103,3 +103,57 @@ The ligand label also changed to reflect that this connection is now a function 
 Solving for a graph
 -------------------
 Once the state and graph files have been defined, we are ready to build the cycle and solve for the free energies.
+For a predefined graph, we will use the two site, four state proton binding model from above with a state and graph file defined as:
+
+.. code-block::
+
+   # states.csv
+   name,Nprotons
+   1,0
+   2,1
+   4,1
+   3,2
+
+.. code-block::
+
+   # graph.csv
+   state1,state2,value,variance,ligand,standard_state
+   1,2,6,0.1,H+,1
+   2,3,7,0.5,H+,1
+   4,3,6,0.1,H+,1
+   1,4,5.7,5,H+,1
+
+The system can then be loaded and solved using the `Multibind` object.
+
+.. code-block:: python
+
+   >>> import multibind as mb
+   >>> c = mb.Multibind(state_file="states.csv", graph_file="graph.csv", comment='#')
+   >>> c.build_cycle(pH=8)
+   >>> c.MLE()
+   >>> c.g_mle # numpy array containing the state free energies at pH 8
+
+The entries of the `g_mle` attribute correspond to the order of the states as defined in `states.csv`.
+
+Macroscopic free energies can be calculated.
+For instance, in order to calculate the macroscopic binding free energy between a zero bound proton state and a single bound proton state, you can use
+
+.. code-block:: python
+
+   >>> c.effective_energy_difference("Nprotons", 0, 1)
+
+This binding free energy might a quantity of interest over a range of pH values.
+Rather than iterating over a range of values, the `MultibindScanner` conveniently handles this for you and stores standard results in an `xarray.DataArray`.
+For the above example over the pH range 0 to 14, we can write:
+
+.. code-block:: python
+
+   >>> from multibind.multibind import MultibindScanner
+   >>> import numpy as np
+   >>> scanner = MultibindScanner("states.csv", "graph.csv", comment_char='#')
+   >>> concentrations = {"H+": np.linspace(0, 14)}
+
+   >>> scanner.run(concentrations)
+   >>> scanner.results.pH # pH values scanned over
+   >>> scanner.results.microstate_probs # miscrostate probabilities as a function of pH
+   >>> scanner.results.free_energy # state free energies as a function of pH
