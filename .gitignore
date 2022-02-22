@@ -6,3 +6,8 @@ __pycache__/
 .pytest_cache
 poetry.lock
 dist/
+.coverage
+coverage.xml
+docs/build/
+docs/_build/
+docs/generated/

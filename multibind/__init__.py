@@ -1,2 +1,6 @@
+from importlib.metadata import version
 from .multibind import Multibind
-from .multibind import MultibindDriver
+
+__version__ = version("multibind")
+
+del version
