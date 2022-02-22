@@ -1,7 +1,7 @@
 # Multibind
 
 
-[![DOI](https://zenodo.org/badge/301552078.svg)](https://zenodo.org/badge/latestdoi/301552078) ![Tests](https://github.com/BecksteinLab/multibind/actions/workflows/tests.yml/badge.svg?branch=develop) [![codecov](https://codecov.io/gh/Becksteinlab/multibind/branch/develop/graph/badge.svg?token=7T3Z19P4W5)](https://codecov.io/gh/Becksteinlab/multibind)
+[![DOI](https://zenodo.org/badge/301552078.svg)](https://zenodo.org/badge/latestdoi/301552078) ![Tests](https://github.com/BecksteinLab/multibind/actions/workflows/tests.yml/badge.svg?branch=develop) [![codecov](https://codecov.io/gh/Becksteinlab/multibind/branch/develop/graph/badge.svg?token=7T3Z19P4W5)](https://codecov.io/gh/Becksteinlab/multibind) [![docs](https://readthedocs.org/projects/multibind/badge/?version=latest)](https://multibind.readthedocs.io/en/latest/?badge=latest)
 
 
 Thermodynamic cycles which are defined by a set of individually determined free energy differences are not guaranteed to be thermodynamically consistent.
