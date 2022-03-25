@@ -489,3 +489,17 @@ class Multibind(object):
         self.graph = self._parse(filename, comment=comment)
         self.graph['state1'] = self.graph['state1'].astype('str')
         self.graph['state2'] = self.graph['state2'].astype('str')
+
+    def write_graph(self, filename: str):
+        """Write the current graph to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to write file to
+
+        Returns
+        -------
+        None
+        """
+        self.graph.to_csv(filename, index=False)
