@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from multibind.multibind import InvalidConcentrationError
-from multibind.multibind import Multibind
-from multibind.multibind import MultibindScanner
+from multibind import InvalidConcentrationError
+from multibind import Multibind
+from multibind import MultibindScanner
 import numpy as np
 import numpy.testing as npt
 
