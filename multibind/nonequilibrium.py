@@ -5,8 +5,9 @@ import os
 import numpy as np
 from math import isclose
 
+from typing import Tuple
 
-def rate_matrix(filename: str) -> (Multibind, np.ndarray, np.ndarray):
+def rate_matrix(filename: str) -> Tuple[Multibind, np.ndarray, np.ndarray]:
     """Build a rate matrix from a connectivity file with rates.
 
     The rates are converted into free energy differences between states and
@@ -139,7 +140,7 @@ def rate_matrix(filename: str) -> (Multibind, np.ndarray, np.ndarray):
         return c, _rate_matrix, _rate_matrix_SE
 
 
-def clean_sigmas(r1: float, r2: float) -> (float, float):
+def clean_sigmas(r1: float, r2: float) -> Tuple[float, float]:
     """If sigmas are zero, it's best to just make them close to zero to avoid errors.
 
     Parameters
@@ -161,7 +162,7 @@ def clean_sigmas(r1: float, r2: float) -> (float, float):
     return r1, r2
 
 
-def project_rates(kijb: float, kjib: float, sijb: float, sjib: float, dg: float, infinity: float = 1e12) -> (float, float):
+def project_rates(kijb: float, kjib: float, sijb: float, sjib: float, dg: float, infinity: float = 1e12) -> Tuple[float, float]:
     """Project input rates and standard errors onto the consistency line.
 
     Parameters
