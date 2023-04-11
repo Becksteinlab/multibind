@@ -84,3 +84,9 @@ concentrations = {'H+': [7, 8, 9], 'Na+': [0.200, 0.150, 0.100]}
 # scanner.results
 scanner.run(concentrations, svd=True)
 ```
+
+## Citation
+
+When using **multibind** in published works, please cite the following preprint:
+
+Kenney, Ian Michael, and Oliver Beckstein. Thermodynamically Consistent Determination of Free Energies and Rates in Kinetic Cycle Models. 2023. doi:10.1101/2023.04.08.536126.
