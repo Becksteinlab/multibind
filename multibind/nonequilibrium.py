@@ -30,6 +30,11 @@ def rate_matrix(filename: str) -> (Multibind, np.ndarray, np.ndarray):
 
     _rates = pd.read_csv(filename, header=0)
 
+    # convert state label columns to str (stored as plain objects in pandas apparently... ) if necessary
+    if not _rates.state1.dtype == object:
+        _rates['state1'] = _rates['state1'].astype(str)
+        _rates['state2'] = _rates['state2'].astype(str)
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         # multibind requires that states and graphs are defined within csv files, we will create temporary files
         states_filename = os.path.join(tmpdirname, "states.csv")
