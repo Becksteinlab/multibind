@@ -28,8 +28,7 @@ def rate_matrix(filename: str) -> (Multibind, np.ndarray, np.ndarray):
         2D array with the standard error on the projected rates.
     """
 
-    _rates = pd.read_csv(filename, header=0)
-
+    _rates = pd.read_csv(filename, header=0, dtype={'state1': str, 'state2': str, 'k': np.float64, 'var': np.float64})
     with tempfile.TemporaryDirectory() as tmpdirname:
         # multibind requires that states and graphs are defined within csv files, we will create temporary files
         states_filename = os.path.join(tmpdirname, "states.csv")
