@@ -11,7 +11,7 @@ Additionally, multibind supports cycles whose free energies are dependent on mul
 
 ## Installation
 
-**multibind** is on [PyPI](https://pypi.org/project/multibind/). You need **Python 3.10** through **3.14**.
+**multibind** is on [PyPI](https://pypi.org/project/multibind/). **Python 3.10** through **3.14** is supported.
 
 ```bash
 pip install multibind
@@ -101,4 +101,4 @@ scanner.run(concentrations, svd=True)
 
 When using **multibind** in published works, please cite the following preprint:
 
-Kenney, Ian Michael, and Oliver Beckstein. Thermodynamically Consistent Determination of Free Energies and Rates in Kinetic Cycle Models. 2023. doi:[10.1101/2023.04.08.536126](https://doi.org/10.1101/2023.04.08.536126).
+Kenney, Ian Michael, and Oliver Beckstein. *Thermodynamically Consistent Determination of Free Energies and Rates in Kinetic Cycle Models.* Biophysical Reports 3 (2023), 100120. doi:[10.1016/j.bpr.2023.100120](https://doi.org/10.1016/j.bpr.2023.100120).
