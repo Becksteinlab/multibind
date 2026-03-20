@@ -1,25 +1,61 @@
-[tool.poetry]
-name = "multibind"
-version = "0.2.0"
-description = "A package to find optimal state free energies from a thermodynamic graph."
-authors = ["Ian Kenney <ikenney@asu.edu>"]
-license = "MIT"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.15"
-# Dependency floors: see PyPI requires_python / classifiers for 3.10–3.14 (pandas 2.3.3+ for 3.14; scipy ≥1.11.4 for 3.13+).
-numpy = ">=1.22.4,<3"
-pandas = ">=2.3.3,<3"
-scipy = ">=1.11.4,<2"
-networkx = ">=3.2,<4"
-xarray = ">=2024.1"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0"
-ipython = "^8.18"
-pytest-cov = "^5.0"
-Sphinx = "^8.0"
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61", "versioningit>=3.0,<4"]
+build-backend = "setuptools.build_meta"
+
+# Poetry requires a placeholder when `version` is dynamic (actual value comes from versioningit at build).
+[tool.poetry]
+version = "0.0.0"
+
+[project]
+name = "multibind"
+dynamic = ["version"]
+description = "A package to find optimal state free energies from a thermodynamic graph."
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+license = "MIT"
+authors = [{ name = "Ian Kenney", email = "ikenney@asu.edu" }]
+# Floors: PyPI classifiers / requires_python for CPython 3.10–3.14 (see prior audit).
+dependencies = [
+    "numpy>=1.22.4,<3",
+    "pandas>=2.3.3,<3",
+    "scipy>=1.11.4,<2",
+    "networkx>=3.2,<4",
+    "xarray>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+    "ipython>=8.18",
+    "pytest-cov>=5.0,<6",
+    "sphinx>=8.0,<10",
+    "versioningit>=3.0,<4",
+]
+test = [
+    "pytest>=8.0,<9",
+    "pytest-cov>=5.0,<6",
+]
+
+[project.urls]
+Homepage = "https://github.com/BecksteinLab/multibind"
+Documentation = "https://multibind.readthedocs.io/"
+
+[tool.setuptools]
+packages = ["multibind"]
+
+[tool.versioningit]
+# PEP 440 public versions only (no +local), so sdists/wheels are PyPI-safe off-tag.
+[tool.versioningit.format]
+distance = "{base_version}.dev{distance}"
+dirty = "{base_version}"
+distance-dirty = "{base_version}.dev{distance}"
+
+[tool.versioningit.tag2version]
+# Explicit: tags are vX.Y.Z; published metadata uses X.Y.Z (PEP 440).
+rmprefix = "v"
+
+[tool.versioningit.vcs]
+# git describe --match=v* so only annotated/lightweight release tags like v0.2.0 are used.
+match = ["v*"]
+# Shallow clones / no matching tags: synthetic tag v0.0.0 → version 0.0.0 after tag2version.
+default-tag = "v0.0.0"

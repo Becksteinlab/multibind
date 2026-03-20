@@ -11,13 +11,15 @@ Additionally, multibind supports cycles whose free energies are dependent on mul
 
 ## Installation
 
-Requires **Python 3.10** through **3.14**. With [Poetry](https://python-poetry.org/):
+**multibind** is on [PyPI](https://pypi.org/project/multibind/). You need **Python 3.10** through **3.14**.
 
 ```bash
-poetry install
+pip install multibind
 ```
 
-For pip, conda, editable installs, tests, and building docs, see **[INSTALL.md](INSTALL.md)**.
+Using conda or mamba, create an environment with a suitable Python version, then run the same command inside it.
+
+To work from a Git clone (editable install), run tests, build docs, or use Poetry, see **[INSTALL.md](INSTALL.md)**.
 
 ## State definitions
 

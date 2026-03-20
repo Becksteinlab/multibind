@@ -31,7 +31,7 @@ jobs:
 
     - name: Install multibind with poetry
       run: |
-        poetry install
+        poetry install --extras dev
 
     - name: Test with pytest
       run: |

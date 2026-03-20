@@ -2,6 +2,7 @@
 orbeckst
 
 Support Python 3.10 - 3.14.
+Package version is derived from Git tags via versioningit (setuptools build backend).
 
 
 2022-02-22    0.2.0
