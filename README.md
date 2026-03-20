@@ -99,6 +99,6 @@ scanner.run(concentrations, svd=True)
 
 ## Citation
 
-When using **multibind** in published works, please cite the following preprint:
+When using **multibind** in published works, please cite the published paper
 
 Kenney, Ian Michael, and Oliver Beckstein. *Thermodynamically Consistent Determination of Free Energies and Rates in Kinetic Cycle Models.* Biophysical Reports 3 (2023), 100120. doi:[10.1016/j.bpr.2023.100120](https://doi.org/10.1016/j.bpr.2023.100120).
