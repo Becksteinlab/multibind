@@ -1,9 +1,9 @@
 2025-04-19    0.2.1
-orbeckst
+ianmkenney, l-repa, orbeckst
 
-Support Python 3.10 - 3.14.
-Package version is derived from Git tags via versioningit (setuptools build backend).
-
+* Support Python 3.10 - 3.14 (issue #14, PR #24)
+* Package version is derived from Git tags via versioningit (setuptools build backend) (issue #25, PR #27)
+* Add conversion of state label columns to str if necessary (PR #22)
 
 2022-02-22    0.2.0
 ianmkenney
