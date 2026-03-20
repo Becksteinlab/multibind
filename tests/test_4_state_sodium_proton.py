@@ -6,7 +6,7 @@ import numpy.testing as npt
 
 class TestG(object):
 
-    def setup(self):
+    def setup_method(self):
         self.c = mb.Multibind()
         self.c.read_graph("../examples/input/4-state-sodium-proton/graph.csv")
         self.c.read_states("../examples/input/4-state-sodium-proton/states.csv")

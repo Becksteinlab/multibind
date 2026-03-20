@@ -8,7 +8,7 @@ import numpy.testing as npt
 
 class TestG_missing_coordinate(object):
 
-    def setup(self):
+    def setup_method(self):
 
         self.concentrations = OrderedDict(
             [('H+', [1, 2, 3, 4, 5, 6, 7]),
@@ -39,7 +39,7 @@ class TestG_missing_coordinate(object):
 
 class TestG(object):
 
-    def setup(self):
+    def setup_method(self):
 
         self.concentrations = OrderedDict()
 
