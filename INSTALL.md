@@ -1,53 +1,77 @@
 # Installing multibind
 
+## Install from PyPI
+
+For most users, install the latest release with pip:
+
+```bash
+python -m pip install --upgrade pip
+pip install multibind
+```
+
 ## Requirements
 
 - **Python** 3.10, 3.11, 3.12, 3.13, or 3.14 (see `pyproject.toml` for the exact supported range).
-- **Dependencies** (installed automatically with the methods below): NumPy, pandas, SciPy, NetworkX, and xarray. NumPy 1.x is allowed on older Pythons; very new interpreters (for example 3.14) typically need a **NumPy 2.x** build that provides wheels for that version.
+- **Runtime dependencies** (pulled in automatically): NumPy, pandas, SciPy, NetworkX, and xarray. NumPy 1.x is allowed on older Pythons; very new interpreters (for example 3.14) typically need a **NumPy 2.x** build with wheels for that version.
 
-## Install with Poetry (recommended for development)
+## Conda or Mamba
 
-[Poetry](https://python-poetry.org/docs/#installation) manages the environment and resolves versions from `pyproject.toml`.
+Create an environment with a suitable Python version, activate it, then use **pip** to install **multibind** as above. Avoid mixing multiple installers for the same package in one environment unless you know how they interact.
 
-From the root of a clone of this repository:
+
+## For developers and contributors
+
+The sections below cover working from a **Git clone**: versioning, Poetry, editable installs, tests, and documentation.
+
+### Versioning and Git tags
+
+Release versions on PyPI are produced with [versioningit](https://github.com/jwodder/versioningit) at **build** time from Git. Release tags must look like **`vMAJOR.MINOR.PATCH`** (for example `v0.2.0`); the leading `v` is removed in the published version string (see `pyproject.toml`).
+
+Install from a **full** clone (`git clone`, not a tree without `.git`) when you build wheels or sdists locally so versioningit can read the repository.
+
+### Install with Poetry
+
+[Poetry](https://python-poetry.org/docs/#installation) resolves dependencies from `pyproject.toml` and is convenient for day-to-day development on a clone.
+
+From the repository root:
+
+```bash
+poetry install --extras dev
+```
+
+**Why `--extras dev`?** The **`dev`** optional dependency group adds tools you need on a clone: **pytest**, **pytest-cov**, **Sphinx**, **versioningit**, and similar. Without it you cannot run the test suite or build the HTML docs in the usual way. (Install **IPython** yourself if you want it for interactive work; it is not required by this package.)
+
+**Why is versioningit in `dev`?** The package version is **dynamic** (from Git tags via setuptools + versioningit when you run `pip install` / `python -m build`). Poetry’s **editable** install records a **`0.0.0`** placeholder in environment metadata. With **versioningit** installed, `multibind.__version__` can fall back to a real version derived from the repo (see `multibind/__init__.py`). Installs from PyPI always get the correct version from package metadata.
+
+Runtime-only dependencies (no tests or docs tooling):
 
 ```bash
 poetry install
 ```
 
-This installs **multibind** in editable mode plus **dev** tools (pytest, Sphinx, IPython, etc.).
-
-To install only runtime dependencies (no dev extras):
-
-```bash
-poetry install --without dev
-```
-
-Run the test suite (paths in the tests assume the working directory is `tests/`):
+Run the tests (paths assume the working directory is `tests/`):
 
 ```bash
 cd tests
 poetry run pytest -v
 ```
 
-## Install with pip
+### Install with pip from a clone
 
-### From a local checkout
-
-Create and activate a virtual environment, then from the repository root:
+With `.git` present so versioningit can run during the build:
 
 ```bash
 python -m pip install --upgrade pip
 pip install .
 ```
 
-Editable install while you change the code:
+Editable install while you change the code (includes dev tools for tests/docs):
 
 ```bash
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-### From GitHub
+### Install from GitHub
 
 Replace the URL if you use a fork:
 
@@ -57,25 +81,13 @@ pip install "multibind @ git+https://github.com/BecksteinLab/multibind.git"
 
 For a specific branch or tag, use the corresponding revision in the URL (see [pip VCS support](https://pip.pypa.io/en/stable/topics/vcs-support/)).
 
-### From PyPI
+### Documentation
 
-If a release is published on PyPI:
+Online: [multibind.readthedocs.io](https://multibind.readthedocs.io/).
 
-```bash
-pip install multibind
-```
-
-## Conda or Mamba environments
-
-Create an environment with a suitable Python version, activate it, then use **pip** inside that environment as above (from a clone or from Git/PyPI). Avoid mixing Poetry and conda installs of the same package in one environment unless you know how they interact.
-
-## Documentation
-
-To build the HTML docs locally, install dev dependencies (e.g. `poetry install`), then:
+To build HTML locally, install dev dependencies (for example `poetry install --extras dev` or `pip install -e ".[dev]"`), then:
 
 ```bash
 cd docs
 sphinx-build -b html . _build/html
 ```
-
-Online documentation: [multibind.readthedocs.io](https://multibind.readthedocs.io/).
