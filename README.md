@@ -9,6 +9,16 @@ This criterion is only satisfied when all the differences in a closed loop vanis
 Multibind is a Python package that allows for the combination of these differences, along with their variances, into a set of data-informed and thermodynamically consistent state free energies.
 Additionally, multibind supports cycles whose free energies are dependent on multiple ligand concentrations.
 
+## Installation
+
+Requires **Python 3.10** through **3.14**. With [Poetry](https://python-poetry.org/):
+
+```bash
+poetry install
+```
+
+For pip, conda, editable installs, tests, and building docs, see **[INSTALL.md](INSTALL.md)**.
+
 ## State definitions
 
 States are minimally defined by a name and should be added to a csv file.
