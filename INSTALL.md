@@ -39,7 +39,7 @@ From the repository root:
 poetry install --extras dev
 ```
 
-**Why `--extras dev`?** The **`dev`** optional dependency group adds tools you need on a clone: **pytest**, **pytest-cov**, **Sphinx**, **IPython**, **versioningit**, and similar. Without it you cannot run the test suite or build the HTML docs in the usual way.
+**Why `--extras dev`?** The **`dev`** optional dependency group adds tools you need on a clone: **pytest**, **pytest-cov**, **Sphinx**, **versioningit**, and similar. Without it you cannot run the test suite or build the HTML docs in the usual way. (Install **IPython** yourself if you want it for interactive work; it is not required by this package.)
 
 **Why is versioningit in `dev`?** The package version is **dynamic** (from Git tags via setuptools + versioningit when you run `pip install` / `python -m build`). Poetry’s **editable** install records a **`0.0.0`** placeholder in environment metadata. With **versioningit** installed, `multibind.__version__` can fall back to a real version derived from the repo (see `multibind/__init__.py`). Installs from PyPI always get the correct version from package metadata.
 
